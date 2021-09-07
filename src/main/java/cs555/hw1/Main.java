@@ -8,9 +8,7 @@ import java.io.IOException;
 public class Main {
     private static final Logger log = LogManager.getLogger(Main.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         log.info("Starting main()...");
-        Controller controller = Controller.getInstance();
-        Client client = new Client(Constants.Client.PORT, controller);
     }
 }

@@ -34,12 +34,15 @@ public class InteractiveCommandParser extends Thread {
         log.info("Starting Command Parser...");
         switch (mode) {
             case Client:
+                System.out.println("Enter commands for the Client: ");
                 parseClientCommands();
                 break;
             case Controller:
+                System.out.println("Enter commands for the Controller: ");
                 parseControllerCommands();
                 break;
             case ChunkServer:
+                System.out.println("Enter commands for ChunkServer: ");
                 parseChunkServerCommands();
                 break;
             default:
@@ -52,16 +55,29 @@ public class InteractiveCommandParser extends Thread {
         String nextCommand;
         Controller controller = (Controller) node;
         while (acceptingCommands) {
-
+            nextCommand = scanner.nextLine().trim();
+            if (nextCommand.contains(Constants.ChunkServer.CMD_GET_HOST)) {
+                controller.printHost();
+            } else if (nextCommand.trim().equals("")) {
+                continue;
+            } else {
+                System.out.println("Invalid command");
+            }
         }
-
     }
 
     private void parseChunkServerCommands() {
         String nextCommand;
         ChunkServer chunkServer = (ChunkServer) node;
         while (acceptingCommands) {
-
+            nextCommand = scanner.nextLine().trim();
+            if (nextCommand.contains(Constants.ChunkServer.CMD_GET_HOST)) {
+                chunkServer.printHost();
+            } else if (nextCommand.trim().equals("")) {
+                continue;
+            } else {
+                System.out.println("Invalid command");
+            }
         }
     }
 
@@ -70,7 +86,7 @@ public class InteractiveCommandParser extends Thread {
         Client client = (Client) node;
         while (acceptingCommands) {
             nextCommand = scanner.nextLine().trim();
-            if (nextCommand.contains(Constants.Client.CMD_LIST_CHUNK_SERVERs)) {
+            if (nextCommand.contains(Constants.Client.CMD_LIST_CHUNK_SERVERS)) {
                 client.listChunkServers();
             } else if (nextCommand.contains(Constants.Client.CMD_ADD_FILE)) {
                 // split command to extract arguments

@@ -14,31 +14,49 @@ import java.util.ArrayList;
  */
 public class Controller implements Node {
     private static final Logger log = LogManager.getLogger(Controller.class);
-    private static String host = Constants.Controller.HOST;
-    private static int port = Integer.parseInt(Constants.Controller.PORT);
     private TCPServerThread tcpServerThread;
     private TCPConnectionsCache tcpConnectionsCache;
 
     private final ArrayList<ChunkServer> chunkServers;
+    private InteractiveCommandParser commandParser;
 
     // singleton instance
     private static volatile Controller instance;
 
-    private Controller() throws IOException {
-        log.info("Initializing Controller");
+    private Controller(int port) throws IOException {
+        log.info("Initializing Client on {}", System.getenv("HOSTNAME"));
         chunkServers = new ArrayList<>();
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
-        tcpServerThread.start();
+        commandParser = new InteractiveCommandParser(this);
     }
 
-    public static Controller getInstance() throws IOException {
+    public void initialize() {
+        tcpServerThread.start();
+        commandParser.start();
+    }
+
+    public static void main(String[] args) throws IOException {
+        if (args.length < 1) {
+            System.out.println("Not enough arguments to start Controller. " +
+                    "Enter <port> for the Controller");
+            System.exit(1);
+        } else if (args.length > 1) {
+            System.out.println("Invalid number of arguments. Provide <port> only");
+        }
+
+        int port = Integer.parseInt(args[0]);
+        Controller controller = Controller.getInstance(port);
+        controller.initialize();
+    }
+
+    public static Controller getInstance(int port) throws IOException {
         if (instance != null) {
             return instance;
         }
         synchronized (ChunkServer.class) {
             if (instance == null) {
-                instance = new Controller();
+                instance = new Controller(port);
             }
 
             return instance;
@@ -54,6 +72,10 @@ public class Controller implements Node {
 
     public void listChunkServers() {
         System.out.println("No. of ChunkServers: " + chunkServers.size());
+    }
+
+    public void printHost() {
+        System.out.println("printHost()");
     }
 
     // TODO: implement heartbeats
