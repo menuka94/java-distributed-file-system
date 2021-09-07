@@ -3,10 +3,14 @@ package cs555.hw1;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+
 public class Main {
     private static final Logger log = LogManager.getLogger(Main.class);
 
-    public static void main(String[] args) {
-        log.info("Hello World!");
+    public static void main(String[] args) throws IOException {
+        log.info("Starting main()...");
+        Controller controller = Controller.getInstance();
+        Client client = new Client(Constants.Client.PORT, controller);
     }
 }
