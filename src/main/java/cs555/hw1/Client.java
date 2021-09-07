@@ -14,6 +14,9 @@ public class Client implements Node {
     private InteractiveCommandParser commandParser;
 
     public Client(int port, Controller controller) {
+        log.info("Initializing Client on {}:{}" + System.getenv("HOSTNAME"), port);
+        String hostname = System.getenv("HOSTNAME");
+        System.out.println("Hostname: " + hostname);
         this.port = port;
         this.controller = controller;
         commandParser = new InteractiveCommandParser(this);

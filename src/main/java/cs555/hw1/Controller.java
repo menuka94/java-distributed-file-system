@@ -25,6 +25,7 @@ public class Controller implements Node {
     private static volatile Controller instance;
 
     private Controller() throws IOException {
+        log.info("Initializing Controller");
         chunkServers = new ArrayList<>();
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
@@ -32,7 +33,6 @@ public class Controller implements Node {
     }
 
     public static Controller getInstance() throws IOException {
-        log.info("getInstance()");
         if (instance != null) {
             return instance;
         }
