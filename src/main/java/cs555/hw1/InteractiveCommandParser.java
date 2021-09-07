@@ -20,7 +20,7 @@ public class InteractiveCommandParser extends Thread {
 
     @Override
     public void run() {
-        log.info("Starting...");
+        log.info("Starting Command Parser...");
         parseClientCommands();
     }
 

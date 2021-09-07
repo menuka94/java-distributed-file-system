@@ -9,6 +9,7 @@ sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
 repositories {
+    google()
     mavenCentral()
 }
 
@@ -27,13 +28,12 @@ test {
     useJUnitPlatform()
 }
 
-/*
 jar {
     manifest {
         attributes "Main-Class": "cs555.hw1.Main"
     }
 
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-}*/
+}
