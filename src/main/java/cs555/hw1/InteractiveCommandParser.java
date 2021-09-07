@@ -11,17 +11,58 @@ public class InteractiveCommandParser extends Thread {
     private Node node;
     private boolean acceptingCommands;
 
+    private enum Mode {
+        Client, Controller, ChunkServer
+    }
+    private Mode mode;
+
     public InteractiveCommandParser(Node node) {
         this.node = node;
         scanner = new Scanner(System.in);
         acceptingCommands = true;
+        if (node instanceof Controller) {
+            mode = Mode.Controller;
+        } else if (node instanceof Client) {
+            mode = Mode.Client;
+        } else if (node instanceof ChunkServer) {
+            mode = Mode.ChunkServer;
+        }
     }
-
 
     @Override
     public void run() {
         log.info("Starting Command Parser...");
+        switch (mode) {
+            case Client:
+                parseClientCommands();
+                break;
+            case Controller:
+                parseControllerCommands();
+                break;
+            case ChunkServer:
+                parseChunkServerCommands();
+                break;
+            default:
+                log.error("Internal Error: Unknown Node type");
+        }
         parseClientCommands();
+    }
+
+    private void parseControllerCommands() {
+        String nextCommand;
+        Controller controller = (Controller) node;
+        while (acceptingCommands) {
+
+        }
+
+    }
+
+    private void parseChunkServerCommands() {
+        String nextCommand;
+        ChunkServer chunkServer = (ChunkServer) node;
+        while (acceptingCommands) {
+
+        }
     }
 
     private void parseClientCommands() {
