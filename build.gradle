@@ -27,12 +27,13 @@ test {
     useJUnitPlatform()
 }
 
+/*
 jar {
     manifest {
-        attributes "Main-Class": "cs455.hw1"
+        attributes "Main-Class": "cs555.hw1.Main"
     }
 
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
-}
+}*/
