@@ -24,7 +24,7 @@ public class Controller implements Node {
     private static volatile Controller instance;
 
     private Controller(int port) throws IOException {
-        log.info("Initializing Client on {}", System.getenv("HOSTNAME"));
+        log.info("Initializing Controller on {}", System.getenv("HOSTNAME"));
         chunkServers = new ArrayList<>();
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);

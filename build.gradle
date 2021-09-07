@@ -30,7 +30,7 @@ test {
 
 jar {
     manifest {
-        attributes "Main-Class": "cs555.hw1.Main"
+        attributes "Main-Class": "cs555.hw1"
     }
 
     from {

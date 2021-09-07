@@ -17,7 +17,7 @@ public class ChunkServer implements Node {
     private InteractiveCommandParser commandParser;
 
     public ChunkServer(Socket controllerSocket) throws IOException {
-        log.info("Initializing Client on {}", System.getenv("HOSTNAME"));
+        log.info("Initializing ChunkServer on {}", System.getenv("HOSTNAME"));
         controllerConnection = new TCPConnection(controllerSocket, this);
 
         tcpConnectionsCache = new TCPConnectionsCache();
