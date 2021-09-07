@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 /**
@@ -14,6 +15,8 @@ import java.util.ArrayList;
  */
 public class Controller implements Node {
     private static final Logger log = LogManager.getLogger(Controller.class);
+
+    private int port;
     private TCPServerThread tcpServerThread;
     private TCPConnectionsCache tcpConnectionsCache;
 
@@ -24,7 +27,8 @@ public class Controller implements Node {
     private static volatile Controller instance;
 
     private Controller(int port) throws IOException {
-        log.info("Initializing Controller on {}", System.getenv("HOSTNAME"));
+        log.info("Initializing Controller on {}:{}", System.getenv("HOSTNAME"), port);
+        this.port = port;
         chunkServers = new ArrayList<>();
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
@@ -75,7 +79,7 @@ public class Controller implements Node {
     }
 
     public void printHost() {
-        System.out.println("printHost()");
+        System.out.println("Host: " + System.getenv("HOSTNAME") + ", Port: " + port);
     }
 
     // TODO: implement heartbeats

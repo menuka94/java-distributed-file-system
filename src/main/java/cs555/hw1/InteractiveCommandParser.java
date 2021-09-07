@@ -99,8 +99,9 @@ public class InteractiveCommandParser extends Thread {
                 } else {
                     System.out.println("Invalid parameters. Please enter 'add-file <file-name> <file-path>'");
                 }
-
-            } else if (nextCommand.trim().equals("")) {
+            } else if (nextCommand.contains(Constants.Client.CMD_GET_HOST)) {
+                client.printHost();
+            } else if (nextCommand.equals("")) {
                 continue;
             } else {
                 System.out.println("Invalid command");

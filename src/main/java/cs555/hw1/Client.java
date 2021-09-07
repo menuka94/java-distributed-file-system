@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 
 public class Client implements Node {
     private static final Logger log = LogManager.getLogger(Client.class);
@@ -65,7 +64,9 @@ public class Client implements Node {
     }
 
     public void printHost() {
-        System.out.println("printHost()");
+        String host = controllerConnection.getLocalHostname();
+        int localPort = controllerConnection.getLocalPort();
+        System.out.println("Host: " + host + ", Port: " + localPort);
     }
 
     public void listChunkServers() {

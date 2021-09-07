@@ -50,6 +50,10 @@ public class TCPConnection {
         return socket.getLocalAddress().getAddress();
     }
 
+    public String getLocalHostname() {
+        return socket.getLocalAddress().getCanonicalHostName();
+    }
+
     public int getLocalPort() {
         return socket.getLocalPort();
     }
