@@ -1,6 +1,5 @@
 package cs555.hw1.node;
 
-import cs555.hw1.Constants;
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
@@ -9,12 +8,15 @@ import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.RegisterClient;
+import cs555.hw1.wireformats.ReportClientRegistration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A controller node for managing information about chunk servers and chunks within the
@@ -24,7 +26,7 @@ import java.util.ArrayList;
  * Also responsible for tracking 'live' chunk servers in the system.
  * The Controller does not store anything on disk -- all information about the chunk servers
  * and the chunks they hold are maintained in memory.
- *
+ * <p>
  * The Controller runs on a preset host and port.
  */
 public class Controller implements Node {
@@ -49,8 +51,6 @@ public class Controller implements Node {
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
         commandParser = new InteractiveCommandParser(this);
-        clientSocket = new Socket(Constants.Client.HOST, Constants.Client.PORT);
-        clientConnection = new TCPConnection(clientSocket, this);
         tcpConnectionsCache.addConnection(clientSocket, clientConnection);
     }
 
@@ -109,7 +109,56 @@ public class Controller implements Node {
             case Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER:
                 sendClientChunkServers(event);
                 break;
+            case Protocol.REGISTER_CLIENT:
+                try {
+                    registerClient(event);
+                } catch (IOException e) {
+                    log.error("Error registering client: {}", e.getMessage());
+                    e.printStackTrace();
+                }
+                break;
         }
+    }
+
+    private void registerClient(Event event) throws IOException {
+        log.info("registerClient(event)");
+
+        // Process Request
+        RegisterClient registerClient = (RegisterClient) event;
+        log.info("Client IP Address Length: {}", registerClient.getIpAddressLength());
+
+        byte[] clientIpAddress = registerClient.getIpAddress();
+        log.info("Client IP Address: {}", clientIpAddress);
+
+        int clientPort = registerClient.getPort();
+        log.info("Client Port: {}", clientPort);
+
+        // Start Response
+        ReportClientRegistration responseEvent = new ReportClientRegistration();
+        if (!Arrays.equals(clientIpAddress,
+                registerClient.getSocket().getInetAddress().getAddress())) {
+            log.warn("IP Addresses differ");
+            responseEvent.setSuccessStatus(-1);
+            String infoString = "Registration IP Address and origin IP Address do not match";
+            responseEvent.setInfoString(infoString);
+            responseEvent.setLengthOfString((byte) infoString.getBytes().length);
+        } else if (tcpConnectionsCache.containsConnection(registerClient.getSocket())){
+            // initialize client connection
+            log.info("Initializing Client Connection");
+//            clientSocket = new Socket(clientIpAddress, clientPort);
+//            clientConnection = new TCPConnection(clientSocket, this);
+            responseEvent.setSuccessStatus(1);
+            String infoString = "Client successfully registered with the Controller";
+            responseEvent.setInfoString(infoString);
+            responseEvent.setLengthOfString((byte) infoString.getBytes().length);
+        } else {
+            log.warn("Client connection not found in TCPConnectionsCache. Please try again.");
+            return;
+        }
+
+//        clientConnection.sendData(responseEvent.getBytes());
+        clientConnection = tcpConnectionsCache.getConnection(registerClient.getSocket());
+        clientConnection.sendData(responseEvent.getBytes());
     }
 
     private void sendClientChunkServers(Event event) {

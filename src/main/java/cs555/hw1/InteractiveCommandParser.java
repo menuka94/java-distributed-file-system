@@ -7,6 +7,7 @@ import cs555.hw1.node.Node;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class InteractiveCommandParser extends Thread {
@@ -18,6 +19,7 @@ public class InteractiveCommandParser extends Thread {
     private enum Mode {
         Client, Controller, ChunkServer
     }
+
     private Mode mode;
 
     public InteractiveCommandParser(Node node) {
@@ -36,23 +38,27 @@ public class InteractiveCommandParser extends Thread {
     @Override
     public void run() {
         log.info("Starting Command Parser...");
-        switch (mode) {
-            case Client:
-                System.out.println("Enter commands for the Client: ");
-                parseClientCommands();
-                break;
-            case Controller:
-                System.out.println("Enter commands for the Controller: ");
-                parseControllerCommands();
-                break;
-            case ChunkServer:
-                System.out.println("Enter commands for ChunkServer: ");
-                parseChunkServerCommands();
-                break;
-            default:
-                log.error("Internal Error: Unknown Node type");
+        try {
+            switch (mode) {
+                case Client:
+                    System.out.println("Enter commands for the Client: ");
+                    parseClientCommands();
+                    break;
+                case Controller:
+                    System.out.println("Enter commands for the Controller: ");
+                    parseControllerCommands();
+                    break;
+                case ChunkServer:
+                    System.out.println("Enter commands for ChunkServer: ");
+                    parseChunkServerCommands();
+                    break;
+                default:
+                    log.error("Internal Error: Unknown Node type");
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
         }
-        parseClientCommands();
     }
 
     private void parseControllerCommands() {
@@ -85,7 +91,7 @@ public class InteractiveCommandParser extends Thread {
         }
     }
 
-    private void parseClientCommands() {
+    private void parseClientCommands() throws IOException {
         String nextCommand;
         Client client = (Client) node;
         while (acceptingCommands) {

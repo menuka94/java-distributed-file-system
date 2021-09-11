@@ -1,6 +1,7 @@
 package cs555.hw1.transport;
 
 import cs555.hw1.node.Node;
+import cs555.hw1.wireformats.EventFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,6 +30,7 @@ public class TCPReceiverThread extends Thread {
                 dataLength = din.readInt();
                 byte[] data = new byte[dataLength];
                 din.readFully(data, 0, dataLength);
+                node.onEvent(EventFactory.getInstance().getEvent(data, socket));
             } catch (IOException e) {
                 log.error(e.getMessage());
                 System.out.println(e.getStackTrace());

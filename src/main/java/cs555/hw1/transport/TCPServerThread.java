@@ -1,13 +1,13 @@
 package cs555.hw1.transport;
 
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-
 import cs555.hw1.node.Node;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class TCPServerThread extends Thread {
     private static final Logger logger = LogManager.getLogger(TCPServerThread.class);

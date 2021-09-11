@@ -24,7 +24,7 @@ public class EventFactory {
 
     public Event getEvent(byte[] data, Socket socket) throws IOException {
         byte b = ByteBuffer.wrap(data).get(0);
-        switch ((int)b) {
+        switch ((int) b) {
             case Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER:
                 log.info("CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER");
                 ClientRequestsChunkServersFromController requestChunkServersEvent =
@@ -37,6 +37,16 @@ public class EventFactory {
                         new ControllerSendsClientChunkServers();
                 sendsClientChunkServersEvent.setSocket(socket);
                 return sendsClientChunkServersEvent;
+            case Protocol.REGISTER_CLIENT:
+                log.info("REGISTER_CLIENT");
+                RegisterClient registerClient = new RegisterClient(data);
+                registerClient.setSocket(socket);
+                return registerClient;
+            case Protocol.REPORT_CLIENT_REGISTRATION:
+                log.info("REPORT_CLIENT_REGISTRATION");
+                ReportClientRegistration clientRegistration = new ReportClientRegistration(data);
+                clientRegistration.setSocket(socket);
+                return clientRegistration;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

@@ -16,7 +16,6 @@ public class Constants {
     public static class Client {
         public static final String CMD_LIST_CHUNK_SERVERS = "list-chunk-servers";
         public static final String CMD_ADD_FILE = "add-file";
-        public static final String HOST = "boston";
         public static final int PORT = 9010;
         public static final String CMD_GET_HOST = "get-host";
     }

@@ -13,39 +13,25 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ClientRequestsChunkServersFromController extends Event {
-    private static final Logger log = LogManager.getLogger(ClientRequestsChunkServersFromController.class);
+public class RegisterClient extends Event {
+    private static final Logger log = LogManager.getLogger(RegisterClient.class);
 
     private byte ipAddressLength;
     private byte[] ipAddress;
     private int port;
-
-    public byte getIpAddressLength() {
-        return ipAddressLength;
-    }
-
-    public byte[] getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(byte[] ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
     private Socket socket;
 
-
-    public ClientRequestsChunkServersFromController() {
+    public RegisterClient() {
 
     }
 
-    public ClientRequestsChunkServersFromController(byte[] marshalledBytes) throws IOException {
+    public RegisterClient(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
         byte messageType = din.readByte();
 
-        EventValidator.validateEventType(messageType, Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER, log);
+        EventValidator.validateEventType(messageType, Protocol.REGISTER_CLIENT, log);
 
         ipAddressLength = din.readByte();
         ipAddress = new byte[ipAddressLength];
@@ -56,24 +42,37 @@ public class ClientRequestsChunkServersFromController extends Event {
         din.close();
     }
 
-    public void setIpAddressLength(byte ipAddressLength) {
-        this.ipAddressLength = ipAddressLength;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
+    @Override
     public Socket getSocket() {
         return socket;
     }
 
     public void setSocket(Socket socket) {
         this.socket = socket;
+    }
+
+    public byte getIpAddressLength() {
+        return ipAddressLength;
+    }
+
+    public void setIpAddressLength(byte ipAddressLength) {
+        this.ipAddressLength = ipAddressLength;
+    }
+
+    public byte[] getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(byte[] ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
     @Override
@@ -108,6 +107,6 @@ public class ClientRequestsChunkServersFromController extends Event {
 
     @Override
     public int getType() {
-        return Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER;
+        return Protocol.REGISTER_CLIENT;
     }
 }

@@ -1,13 +1,15 @@
 package cs555.hw1;
 
 import java.io.IOException;
-
-import java.nio.file.*;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+
 /**
  * Split Input File
- *
  */
 
 public class SplitInputFile {
@@ -15,8 +17,7 @@ public class SplitInputFile {
     private static int PART_SIZE = 64000;
 
     public static void main(final String[] args)
-            throws IOException
-    {
+            throws IOException {
         final Path file = Paths.get(FILE_NAME).toRealPath();
         final String filenameBase = file.getFileName().toString();
         final byte[] buf = new byte[PART_SIZE];
