@@ -1,4 +1,4 @@
-package cs555.hw1;
+package cs555.hw1.models;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,5 +29,8 @@ public class Chunk {
     public boolean isValid() {
         return valid;
     }
+
+    // Each Chunk keeps track of its own integrity, by maintaining checksums for 8KB slices of the chunk
+    // Use SHA-1 which returns a 160-bit digest for a set of bytes
 
 }

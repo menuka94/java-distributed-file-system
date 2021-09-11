@@ -1,6 +1,6 @@
 package cs555.hw1.transport;
 
-import cs555.hw1.Node;
+import cs555.hw1.node.Node;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

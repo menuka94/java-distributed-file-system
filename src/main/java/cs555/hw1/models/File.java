@@ -1,4 +1,4 @@
-package cs555.hw1;
+package cs555.hw1.models;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

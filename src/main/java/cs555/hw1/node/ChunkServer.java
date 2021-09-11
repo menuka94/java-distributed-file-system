@@ -1,15 +1,22 @@
-package cs555.hw1;
+package cs555.hw1.node;
 
+import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
+import cs555.hw1.wireformats.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
+/**
+ * Each chunk server will maintain a list of the files that it manages.
+ * For each file, the chunk server will maintain information about the chunks that it holds
+ * A chunk server will regularly send heartbeats to the controller node.
+ * A given chunk server cannot hold more than one replica of a given chunk.
+ */
 public class ChunkServer implements Node {
     private static final Logger log = LogManager.getLogger(ChunkServer.class);
     private TCPConnection controllerConnection;
@@ -59,5 +66,10 @@ public class ChunkServer implements Node {
         String host = controllerConnection.getLocalHostname();
         int port = controllerConnection.getLocalPort();
         System.out.println("Host: " + host + ", Port: " + port);
+    }
+
+    @Override
+    public void onEvent(Event event) {
+
     }
 }
