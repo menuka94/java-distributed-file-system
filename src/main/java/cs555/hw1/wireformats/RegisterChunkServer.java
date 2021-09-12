@@ -13,7 +13,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class RegisterChunkServer extends Event{
+public class RegisterChunkServer extends Event {
     private static final Logger log = LogManager.getLogger(RegisterChunkServer.class);
 
     private byte ipAddressLength;

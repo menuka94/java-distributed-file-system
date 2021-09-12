@@ -20,8 +20,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -109,7 +108,16 @@ public class Controller implements Node {
     }
 
     public void listChunkServers() {
-        System.out.println("No. of ChunkServers: " + chunkServers.size());
+        ArrayList<Integer> ids = new ArrayList<>(chunkServerSocketMap.keySet());
+        System.out.println("No. of Chunk Servers: " + ids.size());
+        Collections.sort(ids);
+        for (Integer id : ids) {
+            Socket socket = chunkServerSocketMap.get(id);
+            System.out.println("Chunk Server ID: " + id +
+                    ", IP Address: " + socket.getInetAddress().getHostAddress() +
+                    ", Hostname: " + socket.getInetAddress().getCanonicalHostName() +
+                    ", Port: " + socket.getPort());
+        }
     }
 
     public void printHost() {

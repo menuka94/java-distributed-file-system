@@ -13,7 +13,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ReportChunkServerRegistration extends Event{
+public class ReportChunkServerRegistration extends Event {
     private static final Logger log = LogManager.getLogger(ReportChunkServerRegistration.class);
 
     private int messageType;

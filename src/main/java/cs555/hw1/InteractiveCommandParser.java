@@ -66,9 +66,11 @@ public class InteractiveCommandParser extends Thread {
         Controller controller = (Controller) node;
         while (acceptingCommands) {
             nextCommand = scanner.nextLine().trim();
-            if (nextCommand.contains(Constants.ChunkServer.CMD_GET_HOST)) {
+            if (nextCommand.contains(Constants.Controller.CMD_GET_HOST)) {
                 controller.printHost();
-            } else if (nextCommand.trim().equals("")) {
+            } else if (nextCommand.equals(Constants.Controller.CMD_LIST_CHUNK_SERVERS)) {
+                controller.listChunkServers();
+            } else if (nextCommand.equals("")) {
                 continue;
             } else {
                 System.out.println("Invalid command");
@@ -96,9 +98,7 @@ public class InteractiveCommandParser extends Thread {
         Client client = (Client) node;
         while (acceptingCommands) {
             nextCommand = scanner.nextLine().trim();
-            if (nextCommand.contains(Constants.Client.CMD_LIST_CHUNK_SERVERS)) {
-                client.listChunkServers();
-            } else if (nextCommand.contains(Constants.Client.CMD_ADD_FILE)) {
+            if (nextCommand.contains(Constants.Client.CMD_ADD_FILE)) {
                 // split command to extract arguments
                 // example command "add-file test.txt /home/user/Documents/test.txt"
                 String[] args = nextCommand.split("\\s+");

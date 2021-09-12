@@ -7,6 +7,7 @@ public class Constants {
         public static final String HOST = "arkansas";
         public static final String PORT = "9000";
         public static final String CMD_GET_HOST = "get-host";
+        public static final String CMD_LIST_CHUNK_SERVERS = "list-chunk-servers";
     }
 
     public static class ChunkInfo {
@@ -14,7 +15,6 @@ public class Constants {
     }
 
     public static class Client {
-        public static final String CMD_LIST_CHUNK_SERVERS = "list-chunk-servers";
         public static final String CMD_ADD_FILE = "add-file";
         public static final int PORT = 9010;
         public static final String CMD_GET_HOST = "get-host";
