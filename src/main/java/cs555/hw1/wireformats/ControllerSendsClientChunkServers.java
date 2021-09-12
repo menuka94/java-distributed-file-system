@@ -1,6 +1,6 @@
 package cs555.hw1.wireformats;
 
-import cs555.hw1.EventValidator;
+import cs555.hw1.util.EventValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,8 +30,22 @@ public class ControllerSendsClientChunkServers extends Event {
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
         byte messageType = din.readByte();
-
         EventValidator.validateEventType(messageType, getType(), log);
+
+        chunkServerHosts = new String[3];
+        chunkServerPorts = new int[3];
+
+        for (int i = 0; i < 3; i++) {
+            int hostLength = din.readByte();
+            byte[] host = new byte[hostLength];
+            din.readFully(host, 0, hostLength);
+
+            String hostString = new String(host);
+            chunkServerHosts[i] = hostString;
+
+            int port = din.readInt();
+            chunkServerPorts[i] = port;
+        }
 
         baInputStream.close();
         din.close();
@@ -55,6 +69,15 @@ public class ControllerSendsClientChunkServers extends Event {
 
         try {
             dout.writeByte(getType());
+
+            // write chunk server hosts and ports
+            for (int i = 0; i < 3; i++) {
+                int hostLength = (byte) chunkServerHosts[i].getBytes().length;
+                dout.writeByte(hostLength);
+                dout.write(chunkServerHosts[i].getBytes());
+                dout.writeInt(chunkServerPorts[i]);
+            }
+
             dout.flush();
 
             marshalledBytes = baOutputStream.toByteArray();
@@ -74,8 +97,20 @@ public class ControllerSendsClientChunkServers extends Event {
         return marshalledBytes;
     }
 
-    public void setChunkServers(String[] chunkServerHosts, int[] chunkServerPorts) {
+
+    public String[] getChunkServerHosts() {
+        return chunkServerHosts;
+    }
+
+    public void setChunkServerHosts(String[] chunkServerHosts) {
         this.chunkServerHosts = chunkServerHosts;
+    }
+
+    public int[] getChunkServerPorts() {
+        return chunkServerPorts;
+    }
+
+    public void setChunkServerPorts(int[] chunkServerPorts) {
         this.chunkServerPorts = chunkServerPorts;
     }
 

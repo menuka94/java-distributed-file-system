@@ -4,6 +4,7 @@ import cs555.hw1.node.ChunkServer;
 import cs555.hw1.node.Client;
 import cs555.hw1.node.Controller;
 import cs555.hw1.node.Node;
+import cs555.hw1.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,6 +77,8 @@ public class InteractiveCommandParser extends Thread {
                 System.out.println("Invalid command");
             }
         }
+
+        log.info("Shutting down Controller");
     }
 
     private void parseChunkServerCommands() {
@@ -91,6 +94,8 @@ public class InteractiveCommandParser extends Thread {
                 System.out.println("Invalid command");
             }
         }
+
+        log.info("Shutting down ChunkServer");
     }
 
     private void parseClientCommands() throws IOException {
@@ -100,14 +105,15 @@ public class InteractiveCommandParser extends Thread {
             nextCommand = scanner.nextLine().trim();
             if (nextCommand.contains(Constants.Client.CMD_ADD_FILE)) {
                 // split command to extract arguments
-                // example command "add-file test.txt /home/user/Documents/test.txt"
+                // example command "add-file test.txt"
                 String[] args = nextCommand.split("\\s+");
-                if (args.length == 3) {
-                    String fileName = args[1];
-                    String filePath = args[2];
-                    client.addFile(fileName, filePath);
+                log.info("nextCommand: {}", nextCommand);
+                if (args.length == 2) {
+                    String filePath = args[1];
+                    log.info("filePath: {}", filePath);
+                    client.addFile(filePath);
                 } else {
-                    System.out.println("Invalid parameters. Please enter 'add-file <file-name> <file-path>'");
+                    System.out.println("Invalid parameters. Please enter 'add-file <file-path>'");
                 }
             } else if (nextCommand.contains(Constants.Client.CMD_GET_HOST)) {
                 client.printHost();

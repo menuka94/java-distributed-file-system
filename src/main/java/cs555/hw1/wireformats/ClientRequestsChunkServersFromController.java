@@ -1,6 +1,6 @@
 package cs555.hw1.wireformats;
 
-import cs555.hw1.EventValidator;
+import cs555.hw1.util.EventValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,22 +15,6 @@ import java.net.Socket;
 
 public class ClientRequestsChunkServersFromController extends Event {
     private static final Logger log = LogManager.getLogger(ClientRequestsChunkServersFromController.class);
-
-    private byte ipAddressLength;
-    private byte[] ipAddress;
-    private int port;
-
-    public byte getIpAddressLength() {
-        return ipAddressLength;
-    }
-
-    public byte[] getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(byte[] ipAddress) {
-        this.ipAddress = ipAddress;
-    }
 
     private Socket socket;
 
@@ -47,25 +31,8 @@ public class ClientRequestsChunkServersFromController extends Event {
 
         EventValidator.validateEventType(messageType, getType(), log);
 
-        ipAddressLength = din.readByte();
-        ipAddress = new byte[ipAddressLength];
-        din.readFully(ipAddress, 0, ipAddressLength);
-        port = din.readInt();
-
         baInputStream.close();
         din.close();
-    }
-
-    public void setIpAddressLength(byte ipAddressLength) {
-        this.ipAddressLength = ipAddressLength;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public int getPort() {
-        return port;
     }
 
     public Socket getSocket() {
@@ -84,9 +51,6 @@ public class ClientRequestsChunkServersFromController extends Event {
 
         try {
             dout.writeByte(getType());
-            dout.writeByte(ipAddressLength);
-            dout.write(ipAddress);
-            dout.writeInt(port);
             dout.flush();
 
             marshalledBytes = baOutputStream.toByteArray();

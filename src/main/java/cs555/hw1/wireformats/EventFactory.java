@@ -33,7 +33,7 @@ public class EventFactory {
                 return requestChunkServersEvent;
             case Protocol.CONTROLLER_SENDS_CLIENT_CHUNK_SERVERS:
                 ControllerSendsClientChunkServers sendsClientChunkServersEvent =
-                        new ControllerSendsClientChunkServers();
+                        new ControllerSendsClientChunkServers(data);
                 sendsClientChunkServersEvent.setSocket(socket);
                 return sendsClientChunkServersEvent;
             case Protocol.REGISTER_CLIENT:

@@ -1,11 +1,10 @@
 package cs555.hw1.node;
 
-import cs555.hw1.Constants;
+import cs555.hw1.util.Constants;
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
-import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
@@ -241,21 +240,36 @@ public class Controller implements Node {
         clientConnection.sendData(responseEvent.getBytes());
     }
 
-    private void sendClientChunkServers(Event event) {
+    /**
+     * Send client information about 3 ChunkServers to store a new file
+     * @param event
+     */
+    private synchronized void sendClientChunkServers(Event event) {
         log.info("sendClientChunkServers(event)");
-        ClientRequestsChunkServersFromController requestEvent =
-                (ClientRequestsChunkServersFromController) event;
-        log.info("IP Address Length: {}", requestEvent.getIpAddressLength());
-        log.info("IP Address: {}", new String(requestEvent.getIpAddress()));
-        log.info("Port: {}", requestEvent.getPort());
 
         // test data
         String[] chunkServerHosts = new String[]{"host1", "host2", "host3"};
         int[] chunkServerPorts = new int[]{1000, 2000, 3000};
 
+/*
+        int noOfLiveChunkServers = chunkServerSocketMap.keySet().size();
+        if (noOfLiveChunkServers < 3) {
+            log.warn("No. of Live Chunk Servers is less than 3. Returning...");
+            return;
+        }
+
+        // select 3 registered chunk servers
+        for (int i = 0; i < 3; i++) {
+
+        }
+*/
+
         ControllerSendsClientChunkServers responseEvent =
                 new ControllerSendsClientChunkServers();
-        responseEvent.setChunkServers(chunkServerHosts, chunkServerPorts);
+
+        responseEvent.setChunkServerHosts(chunkServerHosts);
+        responseEvent.setChunkServerPorts(chunkServerPorts);
+
         try {
             clientConnection.sendData(responseEvent.getBytes());
         } catch (IOException e) {

@@ -1,6 +1,6 @@
 package cs555.hw1.wireformats;
 
-import cs555.hw1.EventValidator;
+import cs555.hw1.util.EventValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

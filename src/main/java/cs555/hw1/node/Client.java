@@ -4,6 +4,7 @@ import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
+import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
@@ -15,6 +16,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * Client: responsible for storing, retrieving, updating files, splitting a file into chunks,
@@ -70,8 +73,17 @@ public class Client implements Node {
     }
 
 
-    public void addFile(String fileName, String filePath) throws IOException {
-        log.info("addFile: (fileName = {}, filePath = {})", fileName, filePath);
+    public synchronized void addFile(String filePath) throws IOException {
+        log.info("addFile: (file = {})", filePath);
+
+        String fileName = Paths.get(filePath).getFileName().toString();
+        log.info("fileName: {}", fileName);
+
+        // read file contents
+        byte[] bytes = FileUtil.readFileAsBytes(filePath);
+
+        // split file into chunks
+        List<byte[]> chunks = FileUtil.splitFile(bytes);
 
         // contact controller and get a list of 3 chunk servers
         sendChunkServerRequestToController();
@@ -84,18 +96,20 @@ public class Client implements Node {
         // Chunk data will be sent to the chunk servers and not the controller. The controller is only
         // responsible for pointing the client to the chunk servers:
         // chunk data should not flow through the controller.
+    }
+
+    public void retrieveFile(String fileName) {
 
     }
 
-    // request information about 3 Chunk Servers from Controller to store a new file
+    /**
+     * Request information about 3 Chunk Servers from Controller to store a new file
+     * @throws IOException
+     */
     private void sendChunkServerRequestToController() throws IOException {
         log.info("sendChunkServerRequestToController()");
         ClientRequestsChunkServersFromController requestChunkServersEvent =
                 new ClientRequestsChunkServersFromController();
-        requestChunkServersEvent.setIpAddressLength((byte) controllerConnection.getSocket()
-                .getLocalAddress().getAddress().length);
-        requestChunkServersEvent.setIpAddress(controllerConnection.getSocket()
-                .getLocalAddress().getAddress());
         requestChunkServersEvent.setSocket(controllerConnection.getSocket());
         controllerConnection.sendData(requestChunkServersEvent.getBytes());
     }
@@ -104,11 +118,6 @@ public class Client implements Node {
         String host = controllerConnection.getLocalHostname();
         int localPort = controllerConnection.getLocalPort();
         System.out.println("Host: " + host + ", Port: " + localPort);
-    }
-
-    public void listChunkServers() {
-        log.info("listChunkServers");
-//        controller.listChunkServers();
     }
 
     @Override
@@ -126,6 +135,10 @@ public class Client implements Node {
         }
     }
 
+    /**
+     * Contact Controller for registration
+     * @throws IOException
+     */
     private void sendRegistrationRequestToController() throws IOException {
         log.info("sendRegistrationRequestToController()");
         RegisterClient registerClient = new RegisterClient();
@@ -139,6 +152,10 @@ public class Client implements Node {
         controllerConnection.sendData(registerClient.getBytes());
     }
 
+    /**
+     * Process response sent by Controller regarding Registration
+     * @param event
+     */
     private void handleControllerRegistrationResponse(Event event) {
         log.info("handleControllerRegistration");
         ReportClientRegistration registrationEvent = (ReportClientRegistration) event;
@@ -152,9 +169,19 @@ public class Client implements Node {
         }
     }
 
+    /**
+     * Process response after the Controller sends information about 3 chunk servers
+     * @param event
+     */
     private void handleControllerSendsChunkServers(Event event) {
         log.info("handleControllerSendsChunkServers(event)");
         ControllerSendsClientChunkServers sendsClientChunkServersEvent =
                 (ControllerSendsClientChunkServers) event;
+        String[] hosts = sendsClientChunkServersEvent.getChunkServerHosts();
+        int[] ports = sendsClientChunkServersEvent.getChunkServerPorts();
+        System.out.println("Chunk Servers Returned: ");
+        for (int i = 0; i < 3; i++) {
+            System.out.println(hosts[i] + ": " + ports[i]);
+        }
     }
 }

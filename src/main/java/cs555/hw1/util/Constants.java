@@ -1,7 +1,9 @@
-package cs555.hw1;
+package cs555.hw1.util;
 
 public class Constants {
     public static final String CHUNK_DIR = "/tmp";
+    public static final int CHUNK_SIZE = 64000; // chunk size in bytes
+    public static final int REPLICATION_LEVEL = 3;
 
     public static class Controller {
         public static final String HOST = "arkansas";
@@ -18,6 +20,7 @@ public class Constants {
         public static final String CMD_ADD_FILE = "add-file";
         public static final int PORT = 9010;
         public static final String CMD_GET_HOST = "get-host";
+        public static final String CMD_RETRIEVE = "retrieve";
     }
 
     public static class ChunkServer {
