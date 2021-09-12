@@ -6,4 +6,7 @@ public interface Protocol {
 
     int REGISTER_CLIENT = 4;
     int REPORT_CLIENT_REGISTRATION = 5;
+
+    int REGISTER_CHUNK_SERVER = 6;
+    int REPORT_CHUNK_SERVER_REGISTRATION = 7;
 }

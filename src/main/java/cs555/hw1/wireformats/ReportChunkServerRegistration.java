@@ -13,8 +13,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ReportClientRegistration extends Event {
-    private static final Logger log = LogManager.getLogger(ReportClientRegistration.class);
+public class ReportChunkServerRegistration extends Event{
+    private static final Logger log = LogManager.getLogger(ReportChunkServerRegistration.class);
 
     private int messageType;
     private int successStatus;
@@ -22,11 +22,11 @@ public class ReportClientRegistration extends Event {
     private String infoString;
     private Socket socket;
 
-    public ReportClientRegistration() {
+    public ReportChunkServerRegistration() {
 
     }
 
-    public ReportClientRegistration(byte[] marshalledBytes) throws IOException {
+    public ReportChunkServerRegistration(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
@@ -42,15 +42,6 @@ public class ReportClientRegistration extends Event {
 
         baInputStream.close();
         din.close();
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public int getMessageType() {
@@ -86,6 +77,15 @@ public class ReportClientRegistration extends Event {
     }
 
     @Override
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
+
+    @Override
     public byte[] getBytes() {
         byte[] marshalledBytes = null;
         ByteArrayOutputStream baOutputStram = new ByteArrayOutputStream();
@@ -109,6 +109,6 @@ public class ReportClientRegistration extends Event {
 
     @Override
     public int getType() {
-        return Protocol.REPORT_CLIENT_REGISTRATION;
+        return Protocol.REPORT_CHUNK_SERVER_REGISTRATION;
     }
 }

@@ -33,7 +33,7 @@ public class TCPReceiverThread extends Thread {
                 node.onEvent(EventFactory.getInstance().getEvent(data, socket));
             } catch (IOException e) {
                 log.error(e.getMessage());
-                System.out.println(e.getStackTrace());
+                e.printStackTrace();
                 break;
             }
         }

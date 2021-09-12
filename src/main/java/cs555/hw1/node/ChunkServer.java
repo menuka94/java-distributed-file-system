@@ -5,6 +5,9 @@ import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.wireformats.Event;
+import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.RegisterChunkServer;
+import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,6 +22,7 @@ import java.net.Socket;
  */
 public class ChunkServer implements Node {
     private static final Logger log = LogManager.getLogger(ChunkServer.class);
+
     private TCPConnection controllerConnection;
     private TCPServerThread tcpServerThread;
     private TCPConnectionsCache tcpConnectionsCache;
@@ -31,6 +35,7 @@ public class ChunkServer implements Node {
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(0, this, tcpConnectionsCache);
         commandParser = new InteractiveCommandParser(this);
+        sendRegistrationRequestToController();
     }
 
     public void initialize() {
@@ -62,6 +67,19 @@ public class ChunkServer implements Node {
         }
     }
 
+    private void sendRegistrationRequestToController() throws IOException {
+        log.info("sendRegistrationRequestToController");
+        RegisterChunkServer registerChunkServer = new RegisterChunkServer();
+        registerChunkServer.setIpAddressLength((byte) controllerConnection.getSocket()
+                .getLocalAddress().getAddress().length);
+        registerChunkServer.setIpAddress(controllerConnection.getSocket()
+                .getLocalAddress().getAddress());
+        registerChunkServer.setPort(tcpServerThread.getListeningPort());
+        registerChunkServer.setSocket(controllerConnection.getSocket());
+
+        controllerConnection.sendData(registerChunkServer.getBytes());
+    }
+
     public void printHost() {
         String host = controllerConnection.getLocalHostname();
         int port = controllerConnection.getLocalPort();
@@ -70,6 +88,26 @@ public class ChunkServer implements Node {
 
     @Override
     public void onEvent(Event event) {
+        int type = event.getType();
+        switch (type) {
+            case Protocol.REPORT_CHUNK_SERVER_REGISTRATION:
+                handleControllerRegistrationResponse(event);
+                break;
+            default:
+                log.warn("Unknown event type");
+        }
+    }
 
+    private void handleControllerRegistrationResponse(Event event) {
+        log.info("handleControllerRegistrationResponse");
+        ReportChunkServerRegistration registrationEvent = (ReportChunkServerRegistration) event;
+        int successStatus = registrationEvent.getSuccessStatus();
+        String infoString = registrationEvent.getInfoString();
+
+        log.info("{} ({})", infoString, successStatus);
+        if (successStatus == -1) {
+            log.warn("Registration failed. Exiting...");
+            System.exit(-1);
+        }
     }
 }

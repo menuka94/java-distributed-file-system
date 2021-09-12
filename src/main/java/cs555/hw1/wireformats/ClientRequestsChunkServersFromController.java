@@ -45,7 +45,7 @@ public class ClientRequestsChunkServersFromController extends Event {
 
         byte messageType = din.readByte();
 
-        EventValidator.validateEventType(messageType, Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER, log);
+        EventValidator.validateEventType(messageType, getType(), log);
 
         ipAddressLength = din.readByte();
         ipAddress = new byte[ipAddressLength];

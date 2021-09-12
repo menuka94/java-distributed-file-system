@@ -1,5 +1,6 @@
 package cs555.hw1.node;
 
+import cs555.hw1.Constants;
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
@@ -8,7 +9,9 @@ import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.RegisterClient;
+import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +20,10 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A controller node for managing information about chunk servers and chunks within the
@@ -41,6 +48,11 @@ public class Controller implements Node {
     private Socket clientSocket;
     private TCPConnection clientConnection;
 
+    private volatile ConcurrentHashMap<Integer, Socket> chunkServerSocketMap;
+    private volatile ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
+
+    private Random random;
+
     // singleton instance
     private static volatile Controller instance;
 
@@ -52,6 +64,9 @@ public class Controller implements Node {
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
         commandParser = new InteractiveCommandParser(this);
         tcpConnectionsCache.addConnection(clientSocket, clientConnection);
+        chunkServerSocketMap = new ConcurrentHashMap<>();
+        chunkServerListeningPortMap = new ConcurrentHashMap<>();
+        random = new Random();
     }
 
     public void initialize() {
@@ -117,8 +132,67 @@ public class Controller implements Node {
                     e.printStackTrace();
                 }
                 break;
+            case Protocol.REGISTER_CHUNK_SERVER:
+                registerChunkServer(event);
+                break;
+            default:
+                log.warn("Unknown event type");
         }
     }
+
+    private synchronized void registerChunkServer(Event event) {
+        // Process Request
+        RegisterChunkServer registerChunkServer = (RegisterChunkServer) event;
+        log.info("Chunk Server IP Address Length: {}", registerChunkServer.getIpAddressLength());
+
+        byte[] ipAddress = registerChunkServer.getIpAddress();
+        log.info("Chunk Server IP Address: {}", ipAddress);
+
+        int port = registerChunkServer.getPort();
+        log.info("Chunk Server Port: {}", port);
+
+        int randomId = 0;
+
+        // Start Response
+        ReportChunkServerRegistration responseEvent = new ReportChunkServerRegistration();
+        if (!Arrays.equals(ipAddress,
+                registerChunkServer.getSocket().getInetAddress().getAddress())) {
+            log.warn("IP Addresses differ");
+            responseEvent.setSuccessStatus(-1);
+            String infoString = "Registration IP Address and origin IP Address do not match";
+            responseEvent.setInfoString(infoString);
+            responseEvent.setLengthOfString((byte) infoString.getBytes().length);
+        } else if (tcpConnectionsCache.containsConnection(registerChunkServer.getSocket())) {
+            // everything is OK. Proceed to register the Chunk Server
+            randomId = random.nextInt(Constants.ChunkServer.MAX_NODES) + 1; // add one to avoid zero
+
+            // check if the ID has already been assigned
+            ConcurrentHashMap.KeySetView<Integer, Socket> assignedIds = chunkServerSocketMap.keySet();
+            while (assignedIds.contains(randomId)) {
+                randomId = random.nextInt(Constants.ChunkServer.MAX_NODES) + 1; // add one to avoid zero
+            }
+
+            log.info("Generated ID for new ChunkServer: {}", randomId);
+            responseEvent.setSuccessStatus(0);
+            String infoString = "Chunk Server successfully registered with the Controller";
+            responseEvent.setInfoString(infoString);
+            responseEvent.setLengthOfString((byte) infoString.getBytes().length);
+        } else {
+            log.warn("ChunkServer connection not found in TCPConnectionsCache. Please try again.");
+            return;
+        }
+
+        TCPConnection tcpConnection = tcpConnectionsCache.getConnection(registerChunkServer.getSocket());
+        try {
+            tcpConnection.sendData(responseEvent.getBytes());
+            chunkServerSocketMap.put(randomId, registerChunkServer.getSocket());
+            chunkServerListeningPortMap.put(randomId, registerChunkServer.getPort());
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     private void registerClient(Event event) throws IOException {
         log.info("registerClient(event)");
@@ -142,12 +216,10 @@ public class Controller implements Node {
             String infoString = "Registration IP Address and origin IP Address do not match";
             responseEvent.setInfoString(infoString);
             responseEvent.setLengthOfString((byte) infoString.getBytes().length);
-        } else if (tcpConnectionsCache.containsConnection(registerClient.getSocket())){
+        } else if (tcpConnectionsCache.containsConnection(registerClient.getSocket())) {
             // initialize client connection
             log.info("Initializing Client Connection");
-//            clientSocket = new Socket(clientIpAddress, clientPort);
-//            clientConnection = new TCPConnection(clientSocket, this);
-            responseEvent.setSuccessStatus(1);
+            responseEvent.setSuccessStatus(0);
             String infoString = "Client successfully registered with the Controller";
             responseEvent.setInfoString(infoString);
             responseEvent.setLengthOfString((byte) infoString.getBytes().length);

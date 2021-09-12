@@ -13,19 +13,19 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class RegisterClient extends Event {
-    private static final Logger log = LogManager.getLogger(RegisterClient.class);
+public class RegisterChunkServer extends Event{
+    private static final Logger log = LogManager.getLogger(RegisterChunkServer.class);
 
     private byte ipAddressLength;
     private byte[] ipAddress;
     private int port;
     private Socket socket;
 
-    public RegisterClient() {
+    public RegisterChunkServer() {
 
     }
 
-    public RegisterClient(byte[] marshalledBytes) throws IOException {
+    public RegisterChunkServer(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
@@ -40,15 +40,6 @@ public class RegisterClient extends Event {
 
         baInputStream.close();
         din.close();
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public byte getIpAddressLength() {
@@ -73,6 +64,15 @@ public class RegisterClient extends Event {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    @Override
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
     }
 
     @Override
@@ -107,6 +107,6 @@ public class RegisterClient extends Event {
 
     @Override
     public int getType() {
-        return Protocol.REGISTER_CLIENT;
+        return Protocol.REGISTER_CHUNK_SERVER;
     }
 }

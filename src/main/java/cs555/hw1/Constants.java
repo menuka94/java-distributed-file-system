@@ -23,5 +23,6 @@ public class Constants {
     public static class ChunkServer {
         public static final String CMD_LIST_FILES = "list-files";
         public static final String CMD_GET_HOST = "get-host";
+        public static final int MAX_NODES = 20;
     }
 }

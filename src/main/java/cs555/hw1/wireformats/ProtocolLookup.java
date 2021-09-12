@@ -11,6 +11,10 @@ public class ProtocolLookup {
                 return "REGISTER_CLIENT";
             case Protocol.REPORT_CLIENT_REGISTRATION:
                 return "REPORT_CLIENT_REGISTRATION";
+            case Protocol.REGISTER_CHUNK_SERVER:
+                return "REGISTER_CHUNK_SERVER";
+            case Protocol.REPORT_CHUNK_SERVER_REGISTRATION:
+                return "REPORT_CHUNK_SERVER_REGISTRATION";
             default:
                 return "ERROR: Unknown Event";
         }

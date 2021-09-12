@@ -16,9 +16,6 @@ import java.net.Socket;
 public class ControllerSendsClientChunkServers extends Event {
     private static final Logger log = LogManager.getLogger(ControllerSendsClientChunkServers.class);
 
-    private byte ipAddressLength;
-    private byte[] ipAddress;
-    private int port;
     private Socket socket;
 
     private String[] chunkServerHosts;
@@ -34,40 +31,12 @@ public class ControllerSendsClientChunkServers extends Event {
 
         byte messageType = din.readByte();
 
-        EventValidator.validateEventType(messageType, Protocol.CONTROLLER_SENDS_CLIENT_CHUNK_SERVERS, log);
-
-        ipAddressLength = din.readByte();
-        ipAddress = new byte[ipAddressLength];
-        din.readFully(ipAddress, 0, ipAddressLength);
-        port = din.readInt();
+        EventValidator.validateEventType(messageType, getType(), log);
 
         baInputStream.close();
         din.close();
     }
 
-    public byte getIpAddressLength() {
-        return ipAddressLength;
-    }
-
-    public void setIpAddressLength(byte ipAddressLength) {
-        this.ipAddressLength = ipAddressLength;
-    }
-
-    public byte[] getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(byte[] ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
 
     @Override
     public Socket getSocket() {
@@ -86,9 +55,6 @@ public class ControllerSendsClientChunkServers extends Event {
 
         try {
             dout.writeByte(getType());
-            dout.writeByte(ipAddressLength);
-            dout.write(ipAddress);
-            dout.writeInt(port);
             dout.flush();
 
             marshalledBytes = baOutputStream.toByteArray();

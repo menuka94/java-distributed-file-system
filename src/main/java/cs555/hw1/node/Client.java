@@ -87,6 +87,7 @@ public class Client implements Node {
 
     }
 
+    // request information about 3 Chunk Servers from Controller to store a new file
     private void sendChunkServerRequestToController() throws IOException {
         log.info("sendChunkServerRequestToController()");
         ClientRequestsChunkServersFromController requestChunkServersEvent =
@@ -120,6 +121,8 @@ public class Client implements Node {
             case Protocol.CONTROLLER_SENDS_CLIENT_CHUNK_SERVERS:
                 handleControllerSendsChunkServers(event);
                 break;
+            default:
+                log.warn("Unknown event type");
         }
     }
 
@@ -141,9 +144,10 @@ public class Client implements Node {
         ReportClientRegistration registrationEvent = (ReportClientRegistration) event;
         int successStatus = registrationEvent.getSuccessStatus();
         String infoString = registrationEvent.getInfoString();
+
         log.info("{} ({})", infoString, successStatus);
         if (successStatus == -1) {
-            log.warn("Controller Registration failed. Exiting...");
+            log.warn("Registration failed. Exiting...");
             System.exit(-1);
         }
     }
