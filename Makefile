@@ -3,6 +3,15 @@ build:
 	chmod +x ./gradlew
 	./gradlew build
 
+controller:
+	./start-controller.sh
+
+chunk-server:
+	./start-chunk-server.sh
+
+client:
+	./start-client.sh
+
 clean:
 	rm -rf build
 
