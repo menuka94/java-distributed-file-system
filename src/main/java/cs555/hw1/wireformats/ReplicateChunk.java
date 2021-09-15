@@ -8,6 +8,7 @@ import java.net.Socket;
 public class ReplicateChunk extends Event {
     private static final Logger log = LogManager.getLogger(ReplicateChunk.class);
 
+
     private Socket socket;
 
     public ReplicateChunk() {
@@ -16,6 +17,15 @@ public class ReplicateChunk extends Event {
 
     public ReplicateChunk(byte[] marshalledBytes) {
 
+    }
+
+    @Override
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
     }
 
     @Override

@@ -4,6 +4,7 @@ import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
+import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
@@ -96,8 +97,9 @@ public class ChunkServer implements Node {
                 break;
             case Protocol.WRITE_INITIAL_CHUNK:
                 handleWriteInitialChunk(event);
+                break;
             default:
-                log.warn("Unknown event type");
+                log.warn("Unknown event type: {}", type);
         }
     }
 
@@ -107,10 +109,14 @@ public class ChunkServer implements Node {
         byte[] chunk = writeInitialChunk.getChunk();
         int sequenceNumber = writeInitialChunk.getSequenceNumber();
         int version = writeInitialChunk.getVersion();
+        String testStr = writeInitialChunk.getTestStr();
         String fileName = writeInitialChunk.getFileName();
 
         log.info("FileName: {}, SequenceNo: {}, version: {}",
                 fileName, sequenceNumber, version);
+        log.info("Hash for received Chunk: {}", FileUtil.hash(chunk));
+        log.info("Received Chunk Length: {}", chunk.length);
+        log.info("testStr: {}", testStr);
     }
 
     private void handleControllerRegistrationResponse(Event event) {

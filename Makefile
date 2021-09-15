@@ -6,6 +6,9 @@ build:
 controller:
 	./start-controller.sh
 
+cs:
+	./start-chunk-server.sh
+
 chunk-server:
 	./start-chunk-server.sh
 

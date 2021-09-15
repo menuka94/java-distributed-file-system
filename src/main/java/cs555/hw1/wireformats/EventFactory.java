@@ -56,6 +56,10 @@ public class EventFactory {
                 WriteInitialChunk writeInitialChunk = new WriteInitialChunk(data);
                 writeInitialChunk.setSocket(socket);
                 return writeInitialChunk;
+            case Protocol.REPLICATE_CHUNK:
+                ReplicateChunk replicateChunk = new ReplicateChunk(data);
+                replicateChunk.setSocket(socket);
+                return replicateChunk;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

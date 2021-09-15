@@ -22,8 +22,15 @@ public class WriteInitialChunk extends Event {
     private String fileName;
     private int sequenceNumber;
     private int version;
+    private String testStr;
 
-    private Chunk chunkObj;
+    public String getTestStr() {
+        return testStr;
+    }
+
+    public void setTestStr(String testStr) {
+        this.testStr = testStr;
+    }
 
     public WriteInitialChunk() {
 
@@ -42,18 +49,23 @@ public class WriteInitialChunk extends Event {
         // read version
         version = din.readInt();
 
-/*
-        // read chunk
-        int chunkSize = din.readByte();
-        chunk = new byte[chunkSize];
-        din.readFully(chunk, 0, chunkSize);
-*/
-
         // read fileName
         int fileNameLength = din.readByte();
         byte[] fileNameBytes = new byte[fileNameLength];
         din.readFully(fileNameBytes, 0, fileNameLength);
         fileName = new String(fileNameBytes);
+
+        // read testStr
+        int testStrLength = din.readByte();
+        byte[] testStrBytes = new byte[testStrLength];
+        din.readFully(testStrBytes, 0, testStrLength);
+        testStr = new String(testStrBytes);
+
+        // read chunk
+        int chunkLength = din.readInt();
+        log.info("received chunkLength: {}", chunkLength);
+        chunk = new byte[chunkLength];
+        din.readFully(chunk, 0, chunkLength);
 
         baInputStream.close();
         din.close();
@@ -110,19 +122,25 @@ public class WriteInitialChunk extends Event {
         try {
             dout.writeByte(getType());
 
+            // write sequenceNumber
             dout.writeInt(sequenceNumber);
 
+            // write version
             dout.writeInt(version);
-
-/*
-            // write chunk
-            dout.writeByte(chunk.length);
-            dout.write(chunk);
-*/
 
             // write fileName
             dout.writeByte(fileName.getBytes().length);
             dout.write(fileName.getBytes());
+
+            // write testStr
+            String test = "testing additional parameters";
+            dout.writeByte(test.getBytes().length);
+            dout.write(test.getBytes());
+
+            // write chunk
+            log.info("sending chunkLength: {}", chunk.length);
+            dout.writeInt(chunk.length);
+            dout.write(chunk);
 
             dout.flush();
 

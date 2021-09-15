@@ -116,6 +116,8 @@ public class Client implements Node {
 
         log.info("Sending Chunk-1 to ChunkServer A (fileName={}, sequenceNo={}, version={})",
                 fileName, 1, 1);
+        log.info("Hash for Chunk-1: {}", FileUtil.hash(chunks.get(0)));
+        log.info("Chunk length: {}", chunks.get(0).length);
         chunkServerConnectionA.sendData(writeInitialChunk.getBytes());
 
         // contact the 3 chunk servers (A, B, C) to store the file
@@ -136,7 +138,7 @@ public class Client implements Node {
      * Request information about 3 Chunk Servers from Controller to store a new file
      * @throws IOException
      */
-    private void sendChunkServerRequestToController() throws IOException {
+    private synchronized void sendChunkServerRequestToController() throws IOException {
         log.info("sendChunkServerRequestToController()");
         ClientRequestsChunkServersFromController requestChunkServersEvent =
                 new ClientRequestsChunkServersFromController();
