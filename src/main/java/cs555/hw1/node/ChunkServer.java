@@ -8,6 +8,7 @@ import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
+import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -93,13 +94,27 @@ public class ChunkServer implements Node {
             case Protocol.REPORT_CHUNK_SERVER_REGISTRATION:
                 handleControllerRegistrationResponse(event);
                 break;
+            case Protocol.WRITE_INITIAL_CHUNK:
+                handleWriteInitialChunk(event);
             default:
                 log.warn("Unknown event type");
         }
     }
 
+    private void handleWriteInitialChunk(Event event) {
+        log.info("handleWriteInitialChunk(event)");
+        WriteInitialChunk writeInitialChunk = (WriteInitialChunk) event;
+        byte[] chunk = writeInitialChunk.getChunk();
+        int sequenceNumber = writeInitialChunk.getSequenceNumber();
+        int version = writeInitialChunk.getVersion();
+        String fileName = writeInitialChunk.getFileName();
+
+        log.info("FileName: {}, SequenceNo: {}, version: {}",
+                fileName, sequenceNumber, version);
+    }
+
     private void handleControllerRegistrationResponse(Event event) {
-        log.info("handleControllerRegistrationResponse");
+        log.info("handleControllerRegistrationResponse(event)");
         ReportChunkServerRegistration registrationEvent = (ReportChunkServerRegistration) event;
         int successStatus = registrationEvent.getSuccessStatus();
         String infoString = registrationEvent.getInfoString();

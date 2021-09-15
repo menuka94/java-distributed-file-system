@@ -11,12 +11,14 @@ import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,6 +34,9 @@ public class Client implements Node {
     private TCPConnection controllerConnection;
     private TCPServerThread tcpServerThread;
     private TCPConnectionsCache tcpConnectionsCache;
+
+    // store ChunkServers returned by controller (overwritten for each call)
+    private ArrayList<Socket> chunkServerSockets;
 
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
@@ -87,6 +92,31 @@ public class Client implements Node {
 
         // contact controller and get a list of 3 chunk servers
         sendChunkServerRequestToController();
+
+        while (chunkServerSockets == null) {
+            // wait for chunkServerSockets object to get populated
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                log.error("Error while waiting for chunkServers to get populated.");
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // establish connection with ChunkServer A
+        Socket socket = chunkServerSockets.get(0);
+        TCPConnection chunkServerConnectionA = new TCPConnection(socket, this);
+
+        WriteInitialChunk writeInitialChunk = new WriteInitialChunk();
+        writeInitialChunk.setFileName(fileName);
+        writeInitialChunk.setChunk(chunks.get(0));
+        writeInitialChunk.setSequenceNumber(1);
+        writeInitialChunk.setVersion(1);
+
+        log.info("Sending Chunk-1 to ChunkServer A (fileName={}, sequenceNo={}, version={})",
+                fileName, 1, 1);
+        chunkServerConnectionA.sendData(writeInitialChunk.getBytes());
 
         // contact the 3 chunk servers (A, B, C) to store the file
         // Client only writes to the first chunk server A, which is responsible for forwarding the chunk to B,
@@ -172,16 +202,29 @@ public class Client implements Node {
     /**
      * Process response after the Controller sends information about 3 chunk servers
      * @param event
+     * @return
      */
-    private void handleControllerSendsChunkServers(Event event) {
+    private void handleControllerSendsChunkServers(Event event)  {
         log.info("handleControllerSendsChunkServers(event)");
         ControllerSendsClientChunkServers sendsClientChunkServersEvent =
                 (ControllerSendsClientChunkServers) event;
         String[] hosts = sendsClientChunkServersEvent.getChunkServerHosts();
         int[] ports = sendsClientChunkServersEvent.getChunkServerPorts();
+
+        ArrayList<Socket> chunkServers = new ArrayList<>();
         System.out.println("Chunk Servers Returned: ");
         for (int i = 0; i < 3; i++) {
             System.out.println(hosts[i] + ": " + ports[i]);
+            try {
+                chunkServers.add(new Socket(hosts[i], ports[i]));
+            } catch (IOException e) {
+                log.error("Error creating a Socket from returned Chunk Server (host={}, port={})",
+                        hosts[i], ports[i]);
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
+
+        chunkServerSockets = chunkServers;
     }
 }

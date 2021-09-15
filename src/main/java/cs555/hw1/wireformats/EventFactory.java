@@ -52,6 +52,10 @@ public class EventFactory {
                 ReportChunkServerRegistration chunkServerRegistration = new ReportChunkServerRegistration(data);
                 chunkServerRegistration.setSocket(socket);
                 return chunkServerRegistration;
+            case Protocol.WRITE_INITIAL_CHUNK:
+                WriteInitialChunk writeInitialChunk = new WriteInitialChunk(data);
+                writeInitialChunk.setSocket(socket);
+                return writeInitialChunk;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;
