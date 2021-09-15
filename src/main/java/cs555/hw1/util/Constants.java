@@ -1,7 +1,7 @@
 package cs555.hw1.util;
 
 public class Constants {
-    public static final String CHUNK_DIR = "/tmp";
+    public static final String CHUNK_DIR = "/tmp/menukaw";
     public static final int CHUNK_SIZE = 64000; // chunk size in bytes
     public static final int REPLICATION_LEVEL = 3;
 
@@ -10,10 +10,6 @@ public class Constants {
         public static final String PORT = "9000";
         public static final String CMD_GET_HOST = "get-host";
         public static final String CMD_LIST_CHUNK_SERVERS = "list-chunk-servers";
-    }
-
-    public static class ChunkInfo {
-        public static final String EXT_DATA_CHUNK = "_chunk";
     }
 
     public static class Client {
@@ -27,5 +23,6 @@ public class Constants {
         public static final String CMD_LIST_FILES = "list-files";
         public static final String CMD_GET_HOST = "get-host";
         public static final int MAX_NODES = 20;
+        public static final String EXT_DATA_CHUNK = "_chunk";
     }
 }

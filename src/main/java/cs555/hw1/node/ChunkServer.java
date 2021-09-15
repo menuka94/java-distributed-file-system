@@ -1,9 +1,11 @@
 package cs555.hw1.node;
 
 import cs555.hw1.InteractiveCommandParser;
+import cs555.hw1.models.Chunk;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
+import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
@@ -13,8 +15,16 @@ import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
 /**
  * Each chunk server will maintain a list of the files that it manages.
@@ -30,9 +40,12 @@ public class ChunkServer implements Node {
     private TCPConnectionsCache tcpConnectionsCache;
     private InteractiveCommandParser commandParser;
 
+    private ArrayList<Chunk> chunks;
+
     public ChunkServer(Socket controllerSocket) throws IOException {
         log.info("Initializing ChunkServer on {}", System.getenv("HOSTNAME"));
         controllerConnection = new TCPConnection(controllerSocket, this);
+        chunks = new ArrayList<>();
 
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(0, this, tcpConnectionsCache);
@@ -103,20 +116,33 @@ public class ChunkServer implements Node {
         }
     }
 
-    private void handleWriteInitialChunk(Event event) {
+    private synchronized void handleWriteInitialChunk(Event event) {
         log.info("handleWriteInitialChunk(event)");
         WriteInitialChunk writeInitialChunk = (WriteInitialChunk) event;
         byte[] chunk = writeInitialChunk.getChunk();
         int sequenceNumber = writeInitialChunk.getSequenceNumber();
         int version = writeInitialChunk.getVersion();
-        String testStr = writeInitialChunk.getTestStr();
         String fileName = writeInitialChunk.getFileName();
 
         log.info("FileName: {}, SequenceNo: {}, version: {}",
                 fileName, sequenceNumber, version);
         log.info("Hash for received Chunk: {}", FileUtil.hash(chunk));
         log.info("Received Chunk Length: {}", chunk.length);
-        log.info("testStr: {}", testStr);
+
+        // write chunk to disk
+        try {
+            Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
+            String outputFileName = Constants.CHUNK_DIR + File.separator  +
+                    fileName + Constants.ChunkServer.EXT_DATA_CHUNK + sequenceNumber;
+            log.info("outputFileName: {}", outputFileName);
+            Files.write(new File(outputFileName).toPath(), chunk);
+
+            Chunk chunkObj = new Chunk(chunk, sequenceNumber, version, fileName);
+            chunks.add(chunkObj);
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
     }
 
     private void handleControllerRegistrationResponse(Event event) {

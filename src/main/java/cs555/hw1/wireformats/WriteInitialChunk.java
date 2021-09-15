@@ -22,15 +22,6 @@ public class WriteInitialChunk extends Event {
     private String fileName;
     private int sequenceNumber;
     private int version;
-    private String testStr;
-
-    public String getTestStr() {
-        return testStr;
-    }
-
-    public void setTestStr(String testStr) {
-        this.testStr = testStr;
-    }
 
     public WriteInitialChunk() {
 
@@ -54,12 +45,6 @@ public class WriteInitialChunk extends Event {
         byte[] fileNameBytes = new byte[fileNameLength];
         din.readFully(fileNameBytes, 0, fileNameLength);
         fileName = new String(fileNameBytes);
-
-        // read testStr
-        int testStrLength = din.readByte();
-        byte[] testStrBytes = new byte[testStrLength];
-        din.readFully(testStrBytes, 0, testStrLength);
-        testStr = new String(testStrBytes);
 
         // read chunk
         int chunkLength = din.readInt();
@@ -131,11 +116,6 @@ public class WriteInitialChunk extends Event {
             // write fileName
             dout.writeByte(fileName.getBytes().length);
             dout.write(fileName.getBytes());
-
-            // write testStr
-            String test = "testing additional parameters";
-            dout.writeByte(test.getBytes().length);
-            dout.write(test.getBytes());
 
             // write chunk
             log.info("sending chunkLength: {}", chunk.length);
