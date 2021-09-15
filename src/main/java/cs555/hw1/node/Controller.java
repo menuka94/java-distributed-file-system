@@ -8,6 +8,7 @@ import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.ProtocolLookup;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
@@ -16,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +48,10 @@ public class Controller implements Node {
     private Socket clientSocket;
     private TCPConnection clientConnection;
 
+    // ChunkServerID, Socket
     private volatile ConcurrentHashMap<Integer, Socket> chunkServerSocketMap;
+
+    // ChunkServerID, Port
     private volatile ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
 
     private Random random;
@@ -129,7 +134,7 @@ public class Controller implements Node {
         log.info("Event type: {}", type);
         switch (type) {
             case Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER:
-                sendClientChunkServers(event);
+                sendChunkServerToClient(event);
                 break;
             case Protocol.REGISTER_CLIENT:
                 try {
@@ -174,8 +179,10 @@ public class Controller implements Node {
             randomId = random.nextInt(Constants.ChunkServer.MAX_NODES) + 1; // add one to avoid zero
 
             // check if the ID has already been assigned
+            // (random object could return the same ID more than once)
             ConcurrentHashMap.KeySetView<Integer, Socket> assignedIds = chunkServerSocketMap.keySet();
             while (assignedIds.contains(randomId)) {
+                // if the random ID has already been assigned to a ChunkServer, generate a new ID
                 randomId = random.nextInt(Constants.ChunkServer.MAX_NODES) + 1; // add one to avoid zero
             }
 
@@ -244,25 +251,28 @@ public class Controller implements Node {
      * Send client information about 3 ChunkServers to store a new file
      * @param event
      */
-    private synchronized void sendClientChunkServers(Event event) {
-        log.info("sendClientChunkServers(event)");
+    private synchronized void sendChunkServerToClient(Event event) {
+        log.info("sendChunkServerToClient(event): {}",
+                ProtocolLookup.getEventLiteral(event.getType()));
 
-        // test data
-        String[] chunkServerHosts = new String[]{"host1", "host2", "host3"};
-        int[] chunkServerPorts = new int[]{1000, 2000, 3000};
+        String[] chunkServerHosts = new String[3];
+        int[] chunkServerPorts = new int[3];
 
-/*
         int noOfLiveChunkServers = chunkServerSocketMap.keySet().size();
         if (noOfLiveChunkServers < 3) {
             log.warn("No. of Live Chunk Servers is less than 3. Returning...");
             return;
         }
+        ArrayList<Integer> assignedIDs = new ArrayList<>(chunkServerSocketMap.keySet());
 
         // select 3 registered chunk servers
         for (int i = 0; i < 3; i++) {
-
+            String chunkServerHost = chunkServerSocketMap.get(assignedIDs.get(i))
+                    .getInetAddress().getHostAddress();
+            int chunkServerPort = chunkServerListeningPortMap.get(assignedIDs.get(i));
+            chunkServerHosts[i] = chunkServerHost;
+            chunkServerPorts[i] = chunkServerPort;
         }
-*/
 
         ControllerSendsClientChunkServers responseEvent =
                 new ControllerSendsClientChunkServers();
