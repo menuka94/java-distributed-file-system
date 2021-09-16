@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Chunk {
     private static final Logger log = LogManager.getLogger(Chunk.class);
@@ -15,6 +16,7 @@ public class Chunk {
     private int sequenceNumber;
     private String fileName;
     private boolean valid;
+    private ArrayList<String> sliceHashes;
 
     public Chunk() {
 
@@ -25,6 +27,7 @@ public class Chunk {
         this.sequenceNumber = sequenceNumber;
         this.fileName = fileName;
         this.valid = true;
+        sliceHashes = new ArrayList<>();
     }
 
     // last updated timestamp
@@ -75,6 +78,14 @@ public class Chunk {
 
     public boolean isValid() {
         return valid;
+    }
+
+    public ArrayList<String> getSliceHashes() {
+        return sliceHashes;
+    }
+
+    public void setSliceHashes(ArrayList<String> sliceHashes) {
+        this.sliceHashes = sliceHashes;
     }
 
     // Each Chunk keeps track of its own integrity, by maintaining checksums for 8KB slices of the chunk

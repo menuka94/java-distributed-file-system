@@ -4,6 +4,7 @@ import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
+import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
@@ -79,6 +80,12 @@ public class Client implements Node {
     }
 
 
+    /**
+     * Add new file to the DFS
+     *
+     * @param filePath
+     * @throws IOException
+     */
     public synchronized void addFile(String filePath) throws IOException {
         log.info("addFile: (file = {})", filePath);
 
@@ -89,7 +96,7 @@ public class Client implements Node {
         byte[] bytes = FileUtil.readFileAsBytes(filePath);
 
         // split file into chunks
-        List<byte[]> chunks = FileUtil.splitFile(bytes);
+        List<byte[]> chunks = FileUtil.splitFile(bytes, Constants.CHUNK_SIZE);
 
         // contact controller and get a list of 3 chunk servers
         sendChunkServerRequestToController();
@@ -105,6 +112,13 @@ public class Client implements Node {
             }
         }
 
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            log.error("Error while waiting on ChunkServer A to complete writing Chunk-1");
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
         // establish connection with ChunkServer A
         Socket socket = chunkServerSockets.get(0);
         TCPConnection chunkServerConnectionA = new TCPConnection(socket, this);

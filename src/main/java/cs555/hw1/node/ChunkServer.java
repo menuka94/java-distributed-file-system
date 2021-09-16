@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Each chunk server will maintain a list of the files that it manages.
@@ -131,7 +132,7 @@ public class ChunkServer implements Node {
         String fileName = forwardChunk.getFileName();
 
         try {
-            writeChunkToFile(fileName, chunk, sequenceNumber, version);
+            writeChunkToDisk(fileName, chunk, sequenceNumber, version);
         } catch (IOException e) {
             log.error(e.getLocalizedMessage());
             e.printStackTrace();
@@ -142,12 +143,24 @@ public class ChunkServer implements Node {
         log.info("handleReplicateChunkRequest(event)");
         ReplicateChunkRequest replicateChunkRequest = (ReplicateChunkRequest) event;
         String fileName = replicateChunkRequest.getFileName();
+        if (fileName.equals("")) {
+            log.warn("fileName is blank");
+        }
+
         int sequenceNumber = replicateChunkRequest.getSequenceNumber();
+        if (sequenceNumber < 1) {
+            log.warn("Invalid sequence number: {}", sequenceNumber);
+        }
+        log.info("fileName: {}, sequence: {}", fileName, sequenceNumber);
 
         Chunk matchingChunk = null;
 
         // read chunk from disk
         StoredFile storedFile = filesMap.get(fileName);
+        if (storedFile == null) {
+            log.error("storedFile is null i.e. chunk not found");
+            return;
+        }
         ArrayList<Chunk> chunks = storedFile.getChunks();
         for (Chunk c : chunks) {
             if (sequenceNumber == c.getSequenceNumber()) {
@@ -191,7 +204,11 @@ public class ChunkServer implements Node {
         }
     }
 
-    private void writeChunkToFile(String fileName, byte[] chunk, int sequenceNumber, int version) throws IOException {
+    /**
+     * Write Chunk to Disk
+     * Calculate and store hashes for 8KB slices
+     */
+    private void writeChunkToDisk(String fileName, byte[] chunk, int sequenceNumber, int version) throws IOException {
         Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
         String outputFileName = Constants.CHUNK_DIR + File.separator +
                 fileName + Constants.ChunkServer.EXT_DATA_CHUNK + sequenceNumber;
@@ -199,6 +216,16 @@ public class ChunkServer implements Node {
         Files.write(new File(outputFileName).toPath(), chunk);
 
         Chunk chunkObj = new Chunk(sequenceNumber, version, fileName);
+
+        // create 8KB slices from 64KB chunk
+        List<byte[]> slices = FileUtil.splitFile(chunk, Constants.SLICE_SIZE);
+        ArrayList<String> hashes = new ArrayList<>();
+        for (byte[] slice : slices) {
+            hashes.add(FileUtil.hash(slice));
+        }
+        chunkObj.setSliceHashes(hashes);
+        log.info("Slice Hashes computed for Chunk({}, sequence-{}, version-{})", fileName, sequenceNumber, version);
+
         if (filesMap.containsKey(fileName)) {
             StoredFile storedFile = filesMap.get(fileName);
             storedFile.addChunk(chunkObj);
@@ -206,6 +233,7 @@ public class ChunkServer implements Node {
             StoredFile storedFile = new StoredFile(fileName);
             storedFile.addChunk(chunkObj);
             filesMap.put(fileName, storedFile);
+            log.info("Chunk added to filesMap");
         }
     }
 
@@ -224,7 +252,7 @@ public class ChunkServer implements Node {
 
         // write chunk to disk
         try {
-            writeChunkToFile(fileName, chunk, sequenceNumber, version);
+            writeChunkToDisk(fileName, chunk, sequenceNumber, version);
         } catch (IOException e) {
             log.error(e.getLocalizedMessage());
             e.printStackTrace();

@@ -20,10 +20,10 @@ public class FileUtil {
         return Files.readAllBytes(Paths.get(filePath));
     }
 
-    public static List<byte[]> splitFile(byte[] bytes) {
+    public static List<byte[]> splitFile(byte[] bytes, int size) {
         List<byte[]> chunks = new ArrayList<>();
         for (int i = 0; i < bytes.length; i++) {
-            byte[] chunk = new byte[Math.min(Constants.CHUNK_SIZE, bytes.length - i)];
+            byte[] chunk = new byte[Math.min(size, bytes.length - i)];
             for (int j = 0; j < chunk.length; j++, i++) {
                 chunk[j] = bytes[i];
             }

@@ -2,7 +2,8 @@ package cs555.hw1.util;
 
 public class Constants {
     public static final String CHUNK_DIR = "/tmp/menukaw";
-    public static final int CHUNK_SIZE = 64000; // chunk size in bytes
+    public static final int CHUNK_SIZE = 64 * 1000; // chunk size in bytes
+    public static final int SLICE_SIZE = 8 * 1000; // slice size in bytes
     public static final int REPLICATION_LEVEL = 3;
 
     public static class Controller {

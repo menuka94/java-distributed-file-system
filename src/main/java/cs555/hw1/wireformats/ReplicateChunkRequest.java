@@ -36,13 +36,14 @@ public class ReplicateChunkRequest extends Event {
         sequenceNumber = din.readInt();
 
         // read fileName
-        int fileNameLength = din.readByte();
+        int fileNameLength = din.readInt();
         byte[] fileNameBytes = new byte[fileNameLength];
         din.readFully(fileNameBytes, 0, fileNameLength);
         fileName = new String(fileNameBytes);
+        log.info("marshalledBytes fileName: {}", fileName);
 
         // read nextChunkServerHost
-        int nextChunkServerHostLength = din.readByte();
+        int nextChunkServerHostLength = din.readInt();
         byte[] nextChunkServerHostBytes = new byte[nextChunkServerHostLength];
         din.readFully(nextChunkServerHostBytes, 0, nextChunkServerHostLength);
         nextChunkServerHost = new String(nextChunkServerHostBytes);
@@ -108,6 +109,7 @@ public class ReplicateChunkRequest extends Event {
             dout.writeInt(sequenceNumber);
 
             // write fileName
+            log.info("getBytes(): fileName: {}", fileName);
             dout.writeInt(fileName.getBytes().length);
             dout.write(fileName.getBytes());
 
