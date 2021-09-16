@@ -10,6 +10,7 @@ import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterClient;
+import cs555.hw1.wireformats.ReplicateChunkRequest;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
@@ -118,7 +119,19 @@ public class Client implements Node {
                 fileName, 1, 1);
         log.info("Hash for Chunk-1: {}", FileUtil.hash(chunks.get(0)));
         log.info("Chunk length: {}", chunks.get(0).length);
+
         chunkServerConnectionA.sendData(writeInitialChunk.getBytes());
+
+        // ask ChunkServer A to forward chunk to ChunkServer B
+        ReplicateChunkRequest replicateRequestA = new ReplicateChunkRequest();
+
+        replicateRequestA.setSequenceNumber(1);
+        replicateRequestA.setFileName(fileName);
+        replicateRequestA.setNextChunkServerHost(chunkServerSockets.get(1).getInetAddress().getHostAddress());
+        replicateRequestA.setNextChunkServerPort(chunkServerSockets.get(1).getPort());
+
+        log.info("Sending replication request to ChunkServer A");
+        chunkServerConnectionA.sendData(replicateRequestA.getBytes());
 
         // contact the 3 chunk servers (A, B, C) to store the file
         // Client only writes to the first chunk server A, which is responsible for forwarding the chunk to B,
@@ -130,12 +143,14 @@ public class Client implements Node {
         // chunk data should not flow through the controller.
     }
 
+
     public void retrieveFile(String fileName) {
 
     }
 
     /**
      * Request information about 3 Chunk Servers from Controller to store a new file
+     *
      * @throws IOException
      */
     private synchronized void sendChunkServerRequestToController() throws IOException {
@@ -169,6 +184,7 @@ public class Client implements Node {
 
     /**
      * Contact Controller for registration
+     *
      * @throws IOException
      */
     private void sendRegistrationRequestToController() throws IOException {
@@ -186,6 +202,7 @@ public class Client implements Node {
 
     /**
      * Process response sent by Controller regarding Registration
+     *
      * @param event
      */
     private void handleControllerRegistrationResponse(Event event) {
@@ -203,10 +220,11 @@ public class Client implements Node {
 
     /**
      * Process response after the Controller sends information about 3 chunk servers
+     *
      * @param event
      * @return
      */
-    private void handleControllerSendsChunkServers(Event event)  {
+    private void handleControllerSendsChunkServers(Event event) {
         log.info("handleControllerSendsChunkServers(event)");
         ControllerSendsClientChunkServers sendsClientChunkServersEvent =
                 (ControllerSendsClientChunkServers) event;

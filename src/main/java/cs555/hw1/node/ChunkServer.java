@@ -2,29 +2,29 @@ package cs555.hw1.node;
 
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.models.Chunk;
+import cs555.hw1.models.StoredFile;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.Event;
+import cs555.hw1.wireformats.ForwardChunk;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
+import cs555.hw1.wireformats.ReplicateChunkRequest;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Each chunk server will maintain a list of the files that it manages.
@@ -40,12 +40,12 @@ public class ChunkServer implements Node {
     private TCPConnectionsCache tcpConnectionsCache;
     private InteractiveCommandParser commandParser;
 
-    private ArrayList<Chunk> chunks;
+    private HashMap<String, StoredFile> filesMap;
 
     public ChunkServer(Socket controllerSocket) throws IOException {
         log.info("Initializing ChunkServer on {}", System.getenv("HOSTNAME"));
         controllerConnection = new TCPConnection(controllerSocket, this);
-        chunks = new ArrayList<>();
+        filesMap = new HashMap<>();
 
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(0, this, tcpConnectionsCache);
@@ -111,8 +111,101 @@ public class ChunkServer implements Node {
             case Protocol.WRITE_INITIAL_CHUNK:
                 handleWriteInitialChunk(event);
                 break;
+            case Protocol.REPLICATE_CHUNK_REQUEST:
+                handleReplicateChunkRequest(event);
+                break;
+            case Protocol.FORWARD_CHUNK:
+                handleForwardChunk(event);
+                break;
             default:
                 log.warn("Unknown event type: {}", type);
+        }
+    }
+
+    private void handleForwardChunk(Event event) {
+        log.info("handleForwardChunk(event)");
+        ForwardChunk forwardChunk = (ForwardChunk) event;
+        byte[] chunk = forwardChunk.getChunk();
+        int sequenceNumber = forwardChunk.getSequenceNumber();
+        int version = forwardChunk.getVersion();
+        String fileName = forwardChunk.getFileName();
+
+        try {
+            writeChunkToFile(fileName, chunk, sequenceNumber, version);
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void handleReplicateChunkRequest(Event event) {
+        log.info("handleReplicateChunkRequest(event)");
+        ReplicateChunkRequest replicateChunkRequest = (ReplicateChunkRequest) event;
+        String fileName = replicateChunkRequest.getFileName();
+        int sequenceNumber = replicateChunkRequest.getSequenceNumber();
+
+        Chunk matchingChunk = null;
+
+        // read chunk from disk
+        StoredFile storedFile = filesMap.get(fileName);
+        ArrayList<Chunk> chunks = storedFile.getChunks();
+        for (Chunk c : chunks) {
+            if (sequenceNumber == c.getSequenceNumber()) {
+                matchingChunk = c;
+            }
+        }
+
+        String nextChunkServerHost = replicateChunkRequest.getNextChunkServerHost();
+        int nextChunkServerPort = replicateChunkRequest.getNextChunkServerPort();
+
+        TCPConnection nextChunkServerConnection;
+        try {
+            Socket nextChunkServerSocket = new Socket(nextChunkServerHost, nextChunkServerPort);
+            if (tcpConnectionsCache.containsConnection(nextChunkServerSocket)) {
+                nextChunkServerConnection = tcpConnectionsCache.getConnection(nextChunkServerSocket);
+            } else {
+                nextChunkServerConnection = new TCPConnection(nextChunkServerSocket, this);
+            }
+        } catch (IOException e) {
+            nextChunkServerConnection = null;
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+
+        // prepare event
+        ForwardChunk forwardChunk = new ForwardChunk();
+        try {
+            forwardChunk.setChunk(matchingChunk.getChunkFromDisk());
+            forwardChunk.setFileName(fileName);
+            forwardChunk.setSequenceNumber(matchingChunk.getSequenceNumber());
+            forwardChunk.setVersion(matchingChunk.getVersion());
+
+            nextChunkServerConnection.sendData(forwardChunk.getBytes());
+        } catch (IOException e) {
+            log.error("Error reading chunk from disk");
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void writeChunkToFile(String fileName, byte[] chunk, int sequenceNumber, int version) throws IOException {
+        Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
+        String outputFileName = Constants.CHUNK_DIR + File.separator +
+                fileName + Constants.ChunkServer.EXT_DATA_CHUNK + sequenceNumber;
+        log.info("outputFileName: {}", outputFileName);
+        Files.write(new File(outputFileName).toPath(), chunk);
+
+        Chunk chunkObj = new Chunk(sequenceNumber, version, fileName);
+        if (filesMap.containsKey(fileName)) {
+            StoredFile storedFile = filesMap.get(fileName);
+            storedFile.addChunk(chunkObj);
+        } else {
+            StoredFile storedFile = new StoredFile(fileName);
+            storedFile.addChunk(chunkObj);
+            filesMap.put(fileName, storedFile);
         }
     }
 
@@ -131,14 +224,7 @@ public class ChunkServer implements Node {
 
         // write chunk to disk
         try {
-            Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
-            String outputFileName = Constants.CHUNK_DIR + File.separator  +
-                    fileName + Constants.ChunkServer.EXT_DATA_CHUNK + sequenceNumber;
-            log.info("outputFileName: {}", outputFileName);
-            Files.write(new File(outputFileName).toPath(), chunk);
-
-            Chunk chunkObj = new Chunk(chunk, sequenceNumber, version, fileName);
-            chunks.add(chunkObj);
+            writeChunkToFile(fileName, chunk, sequenceNumber, version);
         } catch (IOException e) {
             log.error(e.getLocalizedMessage());
             e.printStackTrace();

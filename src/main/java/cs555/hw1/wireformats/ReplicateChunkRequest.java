@@ -4,7 +4,6 @@ import cs555.hw1.util.EventValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,22 +12,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class WriteInitialChunk extends Event {
-    private static final Logger log = LogManager.getLogger(WriteInitialChunk.class);
+public class ReplicateChunkRequest extends Event {
+    private static final Logger log = LogManager.getLogger(ReplicateChunkRequest.class);
 
     private Socket socket;
-    private byte[] chunk;
     private String fileName;
     private int sequenceNumber;
-    private int version;
+    private String nextChunkServerHost;
+    private int nextChunkServerPort;
 
-    public WriteInitialChunk() {
+    public ReplicateChunkRequest() {
 
     }
 
-    public WriteInitialChunk(byte[] marshalledBytes) throws IOException {
+    public ReplicateChunkRequest(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
-        DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
+        DataInputStream din = new DataInputStream(baInputStream);
 
         byte messageType = din.readByte();
         EventValidator.validateEventType(messageType, getType(), log);
@@ -36,40 +35,23 @@ public class WriteInitialChunk extends Event {
         // read sequence number
         sequenceNumber = din.readInt();
 
-        // read version
-        version = din.readInt();
-
         // read fileName
         int fileNameLength = din.readByte();
         byte[] fileNameBytes = new byte[fileNameLength];
         din.readFully(fileNameBytes, 0, fileNameLength);
         fileName = new String(fileNameBytes);
 
-        // read chunk
-        int chunkLength = din.readInt();
-        log.info("received chunkLength: {}", chunkLength);
-        chunk = new byte[chunkLength];
-        din.readFully(chunk, 0, chunkLength);
+        // read nextChunkServerHost
+        int nextChunkServerHostLength = din.readByte();
+        byte[] nextChunkServerHostBytes = new byte[nextChunkServerHostLength];
+        din.readFully(nextChunkServerHostBytes, 0, nextChunkServerHostLength);
+        nextChunkServerHost = new String(nextChunkServerHostBytes);
+
+        // read nextChunkServerPort
+        nextChunkServerPort = din.readInt();
 
         baInputStream.close();
         din.close();
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
-    }
-
-    public byte[] getChunk() {
-        return chunk;
-    }
-
-    public void setChunk(byte[] chunk) {
-        this.chunk = chunk;
     }
 
     public String getFileName() {
@@ -88,38 +70,53 @@ public class WriteInitialChunk extends Event {
         this.sequenceNumber = sequenceNumber;
     }
 
-    public int getVersion() {
-        return version;
+    public String getNextChunkServerHost() {
+        return nextChunkServerHost;
     }
 
-    public void setVersion(int version) {
-        this.version = version;
+    public void setNextChunkServerHost(String nextChunkServerHost) {
+        this.nextChunkServerHost = nextChunkServerHost;
+    }
+
+    public int getNextChunkServerPort() {
+        return nextChunkServerPort;
+    }
+
+    public void setNextChunkServerPort(int nextChunkServerPort) {
+        this.nextChunkServerPort = nextChunkServerPort;
+    }
+
+    @Override
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
     }
 
     @Override
     public byte[] getBytes() {
         byte[] marshalledBytes = null;
-
         ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
         DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
         try {
             dout.writeByte(getType());
 
-            // write sequenceNumber
+            // write sequence number
             dout.writeInt(sequenceNumber);
 
-            // write version
-            dout.writeInt(version);
-
             // write fileName
-            dout.writeByte(fileName.getBytes().length);
+            dout.writeInt(fileName.getBytes().length);
             dout.write(fileName.getBytes());
 
-            // write chunk
-            log.info("sending chunkLength: {}", chunk.length);
-            dout.writeInt(chunk.length);
-            dout.write(chunk);
+            // write nextChunkServerHost
+            dout.writeInt(nextChunkServerHost.getBytes().length);
+            dout.write(nextChunkServerHost.getBytes());
+
+            // write nextChunkServerPort
+            dout.writeInt(nextChunkServerPort);
 
             dout.flush();
 
@@ -134,6 +131,6 @@ public class WriteInitialChunk extends Event {
 
     @Override
     public int getType() {
-        return Protocol.WRITE_INITIAL_CHUNK;
+        return Protocol.REPLICATE_CHUNK_REQUEST;
     }
 }

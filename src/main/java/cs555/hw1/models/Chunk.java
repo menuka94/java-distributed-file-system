@@ -1,14 +1,16 @@
 package cs555.hw1.models;
 
+import cs555.hw1.util.Constants;
+import cs555.hw1.util.FileUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.Serializable;
+import java.io.File;
+import java.io.IOException;
 
-public class Chunk implements Serializable {
+public class Chunk {
     private static final Logger log = LogManager.getLogger(Chunk.class);
 
-    private byte[] data;
     private int version;
     private int sequenceNumber;
     private String fileName;
@@ -18,8 +20,7 @@ public class Chunk implements Serializable {
 
     }
 
-    public Chunk(byte[] data, int version, int sequenceNumber, String fileName) {
-        this.data = data;
+    public Chunk(int version, int sequenceNumber, String fileName) {
         this.version = version;
         this.sequenceNumber = sequenceNumber;
         this.fileName = fileName;
@@ -28,10 +29,6 @@ public class Chunk implements Serializable {
 
     // last updated timestamp
     private String timeStamp;
-
-    public void setData(byte[] data) {
-        this.data = data;
-    }
 
     public void setVersion(int version) {
         this.version = version;
@@ -61,8 +58,11 @@ public class Chunk implements Serializable {
         this.timeStamp = timeStamp;
     }
 
-    public byte[] getData() {
-        return data;
+    public byte[] getChunkFromDisk() throws IOException {
+        String readFilePath = Constants.CHUNK_DIR + File.separator + fileName +
+                Constants.ChunkServer.EXT_DATA_CHUNK + sequenceNumber;
+        log.info("readFilePath: {}", readFilePath);
+        return FileUtil.readFileAsBytes(readFilePath);
     }
 
     public int getVersion() {

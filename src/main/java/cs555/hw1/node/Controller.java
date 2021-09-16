@@ -1,10 +1,10 @@
 package cs555.hw1.node;
 
-import cs555.hw1.util.Constants;
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
+import cs555.hw1.util.Constants;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
@@ -17,7 +17,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -249,6 +248,7 @@ public class Controller implements Node {
 
     /**
      * Send client information about 3 ChunkServers to store a new file
+     *
      * @param event
      */
     private synchronized void sendChunkServerToClient(Event event) {

@@ -21,7 +21,7 @@ public class FileUtil {
     }
 
     public static List<byte[]> splitFile(byte[] bytes) {
-        List<byte[]>chunks = new ArrayList<>();
+        List<byte[]> chunks = new ArrayList<>();
         for (int i = 0; i < bytes.length; i++) {
             byte[] chunk = new byte[Math.min(Constants.CHUNK_SIZE, bytes.length - i)];
             for (int j = 0; j < chunk.length; j++, i++) {

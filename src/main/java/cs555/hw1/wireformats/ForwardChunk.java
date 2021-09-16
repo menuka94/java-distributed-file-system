@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -13,8 +12,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class WriteInitialChunk extends Event {
-    private static final Logger log = LogManager.getLogger(WriteInitialChunk.class);
+public class ForwardChunk extends Event {
+    private static final Logger log = LogManager.getLogger(ForwardChunk.class);
 
     private Socket socket;
     private byte[] chunk;
@@ -22,11 +21,11 @@ public class WriteInitialChunk extends Event {
     private int sequenceNumber;
     private int version;
 
-    public WriteInitialChunk() {
+    public ForwardChunk() {
 
     }
 
-    public WriteInitialChunk(byte[] marshalledBytes) throws IOException {
+    public ForwardChunk(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
@@ -47,21 +46,11 @@ public class WriteInitialChunk extends Event {
 
         // read chunk
         int chunkLength = din.readInt();
-        log.info("received chunkLength: {}", chunkLength);
         chunk = new byte[chunkLength];
         din.readFully(chunk, 0, chunkLength);
 
         baInputStream.close();
         din.close();
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public byte[] getChunk() {
@@ -97,16 +86,25 @@ public class WriteInitialChunk extends Event {
     }
 
     @Override
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
+
+    @Override
     public byte[] getBytes() {
         byte[] marshalledBytes = null;
 
         ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
-        DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
+        DataOutputStream dout = new DataOutputStream(baOutputStream);
 
         try {
             dout.writeByte(getType());
 
-            // write sequenceNumber
+            // write sequence number
             dout.writeInt(sequenceNumber);
 
             // write version
@@ -117,7 +115,6 @@ public class WriteInitialChunk extends Event {
             dout.write(fileName.getBytes());
 
             // write chunk
-            log.info("sending chunkLength: {}", chunk.length);
             dout.writeInt(chunk.length);
             dout.write(chunk);
 
@@ -134,6 +131,6 @@ public class WriteInitialChunk extends Event {
 
     @Override
     public int getType() {
-        return Protocol.WRITE_INITIAL_CHUNK;
+        return Protocol.FORWARD_CHUNK;
     }
 }

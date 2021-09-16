@@ -17,8 +17,10 @@ public class ProtocolLookup {
                 return "REPORT_CHUNK_SERVER_REGISTRATION";
             case Protocol.WRITE_INITIAL_CHUNK:
                 return "WRITE_INITIAL_CHUNK";
-            case Protocol.REPLICATE_CHUNK:
-                return "REPLICATE_CHUNK";
+            case Protocol.REPLICATE_CHUNK_REQUEST:
+                return "REPLICATE_CHUNK_REQUEST";
+            case Protocol.FORWARD_CHUNK:
+                return "FORWARD_CHUNK";
             default:
                 return "ERROR: Unknown Event";
         }
