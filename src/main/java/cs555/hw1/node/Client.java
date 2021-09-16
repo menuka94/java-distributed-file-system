@@ -119,9 +119,10 @@ public class Client implements Node {
             log.error(e.getLocalizedMessage());
             e.printStackTrace();
         }
+
         // establish connection with ChunkServer A
-        Socket socket = chunkServerSockets.get(0);
-        TCPConnection chunkServerConnectionA = new TCPConnection(socket, this);
+        Socket socketA = chunkServerSockets.get(0);
+        TCPConnection chunkServerConnectionA = new TCPConnection(socketA, this);
 
         WriteInitialChunk writeInitialChunk = new WriteInitialChunk();
         writeInitialChunk.setFileName(fileName);
@@ -146,6 +147,27 @@ public class Client implements Node {
 
         log.info("Sending replication request to ChunkServer A");
         chunkServerConnectionA.sendData(replicateRequestA.getBytes());
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // establish connection with ChunkServer B
+        Socket socketB = chunkServerSockets.get(0);
+        TCPConnection chunkServerConnectionB = new TCPConnection(socketB, this);
+
+        // ask ChunkServer B to forward chunk to ChunkServer C
+        ReplicateChunkRequest replicateRequestB = new ReplicateChunkRequest();
+
+        replicateRequestB.setSequenceNumber(1);
+        replicateRequestB.setFileName(fileName);
+        replicateRequestB.setNextChunkServerHost(chunkServerSockets.get(2).getInetAddress().getHostAddress());
+        replicateRequestB.setNextChunkServerPort(chunkServerSockets.get(2).getPort());
+
+        log.info("Sending replication request to ChunkServer B");
+        chunkServerConnectionB.sendData(replicateRequestB.getBytes());
 
         // contact the 3 chunk servers (A, B, C) to store the file
         // Client only writes to the first chunk server A, which is responsible for forwarding the chunk to B,
