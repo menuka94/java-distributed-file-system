@@ -21,6 +21,8 @@ public class ProtocolLookup {
                 return "REPLICATE_CHUNK_REQUEST";
             case Protocol.FORWARD_CHUNK:
                 return "FORWARD_CHUNK";
+            case Protocol.STORE_CHUNK:
+                return "STORE_CHUNK";
             default:
                 return "ERROR: Unknown Event";
         }

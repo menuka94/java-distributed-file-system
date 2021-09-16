@@ -14,6 +14,7 @@ import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReplicateChunkRequest;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
+import cs555.hw1.wireformats.StoreChunk;
 import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -110,16 +112,104 @@ public class ChunkServer implements Node {
                 handleControllerRegistrationResponse(event);
                 break;
             case Protocol.WRITE_INITIAL_CHUNK:
-                handleWriteInitialChunk(event);
+//                handleWriteInitialChunk(event);
+                log.info("WRITE_INITIAL_CHUNK: Inactive");
                 break;
             case Protocol.REPLICATE_CHUNK_REQUEST:
-                handleReplicateChunkRequest(event);
+//                handleReplicateChunkRequest(event);
+                log.info("REPLICATE_CHUNK_REQUEST: Inactive");
                 break;
             case Protocol.FORWARD_CHUNK:
-                handleForwardChunk(event);
+//                handleForwardChunk(event);
+                log.info("FORWARD_CHUNK: Inactive");
+                break;
+            case Protocol.STORE_CHUNK:
+                try {
+                    handleStoreChunk(event);
+                } catch (IOException e) {
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
                 break;
             default:
                 log.warn("Unknown event type: {}", type);
+        }
+    }
+
+    private synchronized void handleStoreChunk(Event event) throws IOException {
+        log.info("handleStoreChunk(event)");
+        StoreChunk storeChunk = (StoreChunk) event;
+        String fileName = storeChunk.getFileName();
+        int sequenceNumber = storeChunk.getSequenceNumber();
+        int version = storeChunk.getVersion();
+        byte[] chunk = storeChunk.getChunk();
+
+        try {
+            writeChunkToDisk(fileName, chunk, sequenceNumber, version);
+        } catch (IOException e) {
+            log.error("Error writing chunk to disk: (fileName={}, sequence={})", fileName, sequenceNumber);
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+
+        // forward chunk (replication)
+        StoreChunk nextStoreChunkEvent = new StoreChunk();
+        nextStoreChunkEvent.setChunk(chunk);
+        nextStoreChunkEvent.setVersion(version);
+        nextStoreChunkEvent.setSequenceNumber(sequenceNumber);
+        nextStoreChunkEvent.setFileName(fileName);
+
+        int nextChunkServersSize = storeChunk.getNextChunkServersSize();
+        log.info("nextChunkServersSize: {}", nextChunkServersSize);
+        String[] nextChunkServerHosts = storeChunk.getNextChunkServerHosts();
+        int[] nextChunkServerPorts = storeChunk.getNextChunkServerPorts();
+
+        Socket nextSocket;
+        TCPConnection nextConnection;
+        if (nextChunkServersSize == 2) {
+            // chunk has only been written once (on A). need to forward from A to B
+            log.info("Written on A: {}._part{}", fileName, sequenceNumber);
+            nextSocket = new Socket(nextChunkServerHosts[0], nextChunkServerPorts[0]);
+            String[] newNextChunkServerHosts = Arrays.copyOfRange(nextChunkServerHosts, 1, nextChunkServersSize);
+            int[] newNextChunkServerPorts = Arrays.copyOfRange(nextChunkServerPorts, 1, nextChunkServersSize);
+
+            nextStoreChunkEvent.setNextChunkServersSize(nextChunkServersSize - 1);
+            nextStoreChunkEvent.setNextChunkServerHosts(newNextChunkServerHosts);
+            nextStoreChunkEvent.setNextChunkServerPorts(newNextChunkServerPorts);
+
+            if (tcpConnectionsCache.containsConnection(nextSocket)) {
+                nextConnection = tcpConnectionsCache.getConnection(nextSocket);
+            } else {
+                nextConnection = new TCPConnection(nextSocket, this);
+            }
+
+            log.info("Forwarding {}._part{} to B", fileName, sequenceNumber);
+            nextConnection.sendData(nextStoreChunkEvent.getBytes());
+
+        } else if (nextChunkServersSize == 1) {
+            // chunk has been written twice (on A and B). forward from B to C
+            log.info("Replicated on B: {}._part{}", fileName, sequenceNumber);
+            nextSocket = new Socket(nextChunkServerHosts[0], nextChunkServerPorts[0]);
+
+            nextStoreChunkEvent.setNextChunkServersSize(0);
+            nextStoreChunkEvent.setNextChunkServerHosts(new String[0]);
+            nextStoreChunkEvent.setNextChunkServerPorts(new int[0]);
+
+            if (tcpConnectionsCache.containsConnection(nextSocket)) {
+                nextConnection = tcpConnectionsCache.getConnection(nextSocket);
+            } else {
+                nextConnection = new TCPConnection(nextSocket, this);
+            }
+
+            log.info("Forwarding {}._part{} to C", fileName, sequenceNumber);
+            nextConnection.sendData(nextStoreChunkEvent.getBytes());
+        } else if (nextChunkServersSize == 0) {
+            // chunk on C
+            // already written to disk above
+            // replication complete
+            log.info("Replicated on C {}._part{}", fileName, sequenceNumber);
+        } else {
+            log.warn("Invalid number of nextChunkServers: {}", nextChunkServersSize);
         }
     }
 

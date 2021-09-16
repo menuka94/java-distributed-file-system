@@ -14,4 +14,5 @@ public interface Protocol {
     int REPLICATE_CHUNK_REQUEST = 9;
 
     int FORWARD_CHUNK = 10;
+    int STORE_CHUNK = 11;
 }

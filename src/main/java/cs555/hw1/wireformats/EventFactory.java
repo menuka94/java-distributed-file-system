@@ -64,6 +64,10 @@ public class EventFactory {
                 ForwardChunk forwardChunk = new ForwardChunk(data);
                 forwardChunk.setSocket(socket);
                 return forwardChunk;
+            case Protocol.STORE_CHUNK:
+                StoreChunk storeChunk = new StoreChunk(data);
+                storeChunk.setSocket(socket);
+                return storeChunk;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;
