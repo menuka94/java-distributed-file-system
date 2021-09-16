@@ -1,10 +1,15 @@
+
+JAR_FILE=../../../libs/cs555-hw1-1.0.jar
+CLASSES_DIR=build/classes/java/main
+
 .PHONY: build
 build:
 	chmod +x ./gradlew
 	./gradlew build
 
 controller:
-	./start-controller.sh
+	# On arkansas.cs.colostate.edu
+	cd $(CLASSES_DIR) && java -cp $(JAR_FILE) cs555.hw1.node.Controller 9000
 
 cs:
 	./start-chunk-server.sh
@@ -12,11 +17,11 @@ cs:
 chunk-server:
 	./start-chunk-server.sh
 
+chunk-server-debug:
+	cd $(CLASSES_DIR) && java -agentlib:jdwp=transport=dt_socket,server=y,address=arkansas:5005,suspend=n  -cp $(JAR_FILE) cs555.hw1.node.ChunkServer arkansas 9000
+
 client:
-	./start-client.sh
+	cd $(CLASSES_DIR) && java -cp $(JAR_FILE) cs555.hw1.node.Client arkansas 9000
 
 clean:
 	rm -rf build
-
-start:
-	cd build/classes/java/main && java -cp ../../../libs/cs555-hw1-1.0.jar cs555.hw1.Main
