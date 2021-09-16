@@ -97,77 +97,95 @@ public class Client implements Node {
 
         // split file into chunks
         List<byte[]> chunks = FileUtil.splitFile(bytes, Constants.CHUNK_SIZE);
+        log.info("No. of chunks: {}", chunks.size());
+        for (int i = 0; i < chunks.size(); i++) {
+            log.info("Writing chunk: {}", i + 1);
+            // contact controller and get a list of 3 chunk servers
+            sendChunkServerRequestToController();
 
-        // contact controller and get a list of 3 chunk servers
-        sendChunkServerRequestToController();
+            while (chunkServerSockets == null || chunkServerSockets.isEmpty()) {
+                // wait for chunkServerSockets object to get populated
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    log.error("Error while waiting for chunkServers to get populated.");
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+            }
 
-        while (chunkServerSockets == null) {
-            // wait for chunkServerSockets object to get populated
             try {
-                Thread.sleep(10);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
-                log.error("Error while waiting for chunkServers to get populated.");
+                log.error("Error while waiting on ChunkServer A to complete writing Chunk-{}", i + 1);
                 log.error(e.getLocalizedMessage());
                 e.printStackTrace();
             }
-        }
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            log.error("Error while waiting on ChunkServer A to complete writing Chunk-1");
-            log.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
+            // establish connection with ChunkServer A
+            TCPConnection chunkServerConnectionA;
+            Socket socketA = chunkServerSockets.get(0);
+            if (tcpConnectionsCache.containsConnection(socketA)) {
+                chunkServerConnectionA = tcpConnectionsCache.getConnection(socketA);
+            } else {
+                chunkServerConnectionA = new TCPConnection(socketA, this);
+            }
 
-        // establish connection with ChunkServer A
-        Socket socketA = chunkServerSockets.get(0);
-        TCPConnection chunkServerConnectionA = new TCPConnection(socketA, this);
+            WriteInitialChunk writeInitialChunk = new WriteInitialChunk();
+            writeInitialChunk.setFileName(fileName);
+            writeInitialChunk.setChunk(chunks.get(i));
+            writeInitialChunk.setSequenceNumber(i + 1);
+            writeInitialChunk.setVersion(1);
 
-        WriteInitialChunk writeInitialChunk = new WriteInitialChunk();
-        writeInitialChunk.setFileName(fileName);
-        writeInitialChunk.setChunk(chunks.get(0));
-        writeInitialChunk.setSequenceNumber(1);
-        writeInitialChunk.setVersion(1);
+            log.info("Sending Chunk to ChunkServer A (fileName={}, sequenceNo={}, version={})",
+                    fileName, i + 1, 1);
+            log.info("Hash for Chunk-{}: {}", i + 1, FileUtil.hash(chunks.get(i)));
+            log.info("Chunk length: {}", chunks.get(i).length);
 
-        log.info("Sending Chunk-1 to ChunkServer A (fileName={}, sequenceNo={}, version={})",
-                fileName, 1, 1);
-        log.info("Hash for Chunk-1: {}", FileUtil.hash(chunks.get(0)));
-        log.info("Chunk length: {}", chunks.get(0).length);
+            chunkServerConnectionA.sendData(writeInitialChunk.getBytes());
 
-        chunkServerConnectionA.sendData(writeInitialChunk.getBytes());
+            // ask ChunkServer A to forward chunk to ChunkServer B
+            ReplicateChunkRequest replicateRequestA = new ReplicateChunkRequest();
 
-        // ask ChunkServer A to forward chunk to ChunkServer B
-        ReplicateChunkRequest replicateRequestA = new ReplicateChunkRequest();
+            replicateRequestA.setSequenceNumber(i + 1);
+            replicateRequestA.setFileName(fileName);
+            replicateRequestA.setNextChunkServerHost(chunkServerSockets.get(1).getInetAddress().getHostAddress());
+            replicateRequestA.setNextChunkServerPort(chunkServerSockets.get(1).getPort());
 
-        replicateRequestA.setSequenceNumber(1);
-        replicateRequestA.setFileName(fileName);
-        replicateRequestA.setNextChunkServerHost(chunkServerSockets.get(1).getInetAddress().getHostAddress());
-        replicateRequestA.setNextChunkServerPort(chunkServerSockets.get(1).getPort());
+            log.info("Sending replication request to ChunkServer A");
+            chunkServerConnectionA.sendData(replicateRequestA.getBytes());
 
-        log.info("Sending replication request to ChunkServer A");
-        chunkServerConnectionA.sendData(replicateRequestA.getBytes());
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            // establish connection with ChunkServer B
+            TCPConnection chunkServerConnectionB;
+            Socket socketB = chunkServerSockets.get(0);
+            if (tcpConnectionsCache.containsConnection(socketB)) {
+                chunkServerConnectionB = tcpConnectionsCache.getConnection(socketB);
+            } else {
+                chunkServerConnectionB = new TCPConnection(socketB, this);
+            }
 
-        // establish connection with ChunkServer B
-        Socket socketB = chunkServerSockets.get(0);
-        TCPConnection chunkServerConnectionB = new TCPConnection(socketB, this);
+            // ask ChunkServer B to forward chunk to ChunkServer C
+            ReplicateChunkRequest replicateRequestB = new ReplicateChunkRequest();
 
-        // ask ChunkServer B to forward chunk to ChunkServer C
-        ReplicateChunkRequest replicateRequestB = new ReplicateChunkRequest();
+            replicateRequestB.setSequenceNumber(i + 1);
+            replicateRequestB.setFileName(fileName);
+            replicateRequestB.setNextChunkServerHost(chunkServerSockets.get(2).getInetAddress().getHostAddress());
+            replicateRequestB.setNextChunkServerPort(chunkServerSockets.get(2).getPort());
 
-        replicateRequestB.setSequenceNumber(1);
-        replicateRequestB.setFileName(fileName);
-        replicateRequestB.setNextChunkServerHost(chunkServerSockets.get(2).getInetAddress().getHostAddress());
-        replicateRequestB.setNextChunkServerPort(chunkServerSockets.get(2).getPort());
+            log.info("Sending replication request to ChunkServer B");
+            chunkServerConnectionB.sendData(replicateRequestB.getBytes());
 
-        log.info("Sending replication request to ChunkServer B");
-        chunkServerConnectionB.sendData(replicateRequestB.getBytes());
+            chunkServerSockets.clear();
+
+            // contact controller and get a list of 3 chunk servers
+            sendChunkServerRequestToController();
+        } // end for each chunk loop
 
         // contact the 3 chunk servers (A, B, C) to store the file
         // Client only writes to the first chunk server A, which is responsible for forwarding the chunk to B,

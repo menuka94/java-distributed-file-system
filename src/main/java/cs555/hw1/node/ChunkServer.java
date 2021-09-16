@@ -123,7 +123,7 @@ public class ChunkServer implements Node {
         }
     }
 
-    private void handleForwardChunk(Event event) {
+    private synchronized void handleForwardChunk(Event event) {
         log.info("handleForwardChunk(event)");
         ForwardChunk forwardChunk = (ForwardChunk) event;
         byte[] chunk = forwardChunk.getChunk();
@@ -139,7 +139,7 @@ public class ChunkServer implements Node {
         }
     }
 
-    private void handleReplicateChunkRequest(Event event) {
+    private synchronized void handleReplicateChunkRequest(Event event) {
         log.info("handleReplicateChunkRequest(event)");
         ReplicateChunkRequest replicateChunkRequest = (ReplicateChunkRequest) event;
         String fileName = replicateChunkRequest.getFileName();
@@ -161,11 +161,17 @@ public class ChunkServer implements Node {
             log.error("storedFile is null i.e. chunk not found");
             return;
         }
+        log.info("File '{}' found on ChunkServer. Searching for chunk-{}", fileName, sequenceNumber);
         ArrayList<Chunk> chunks = storedFile.getChunks();
         for (Chunk c : chunks) {
             if (sequenceNumber == c.getSequenceNumber()) {
                 matchingChunk = c;
             }
+        }
+
+        if (matchingChunk == null) {
+            log.warn("No matching chunk found");
+            System.exit(1);
         }
 
         String nextChunkServerHost = replicateChunkRequest.getNextChunkServerHost();
