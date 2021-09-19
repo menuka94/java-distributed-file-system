@@ -21,6 +21,8 @@ public class ProtocolLookup {
                 return "SEND_MAJOR_HEARTBEAT";
             case Protocol.SEND_MINOR_HEARTBEAT:
                 return "SEND_MINOR_HEARTBEAT";
+            case Protocol.READ_FILE_REQUEST:
+                return "READ_FILE_REQUEST";
             default:
                 return "ERROR: Unknown Event";
         }

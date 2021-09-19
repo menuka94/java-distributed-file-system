@@ -60,6 +60,14 @@ public class EventFactory {
                 SendMajorHeartbeat majorHeartbeat = new SendMajorHeartbeat(data);
                 majorHeartbeat.setSocket(socket);
                 return majorHeartbeat;
+            case Protocol.READ_FILE_REQUEST:
+                ReadFileRequest readFileRequest = new ReadFileRequest(data);
+                readFileRequest.setSocket(socket);
+                return readFileRequest;
+            case Protocol.READ_FILE_RESPONSE:
+                ReadFileResponse readFileResponse = new ReadFileResponse(data);
+                readFileResponse.setSocket(socket);
+                return readFileResponse;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

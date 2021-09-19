@@ -110,16 +110,22 @@ public class InteractiveCommandParser extends Thread {
         while (acceptingCommands) {
             nextCommand = scanner.nextLine().trim();
             if (nextCommand.contains(Constants.Client.CMD_ADD_FILE)) {
-                // split command to extract arguments
                 // example command "add-file test.txt"
                 String[] args = nextCommand.split("\\s+");
-                log.info("nextCommand: {}", nextCommand);
                 if (args.length == 2) {
                     String filePath = args[1];
-                    log.info("filePath: {}", filePath);
                     client.addFile(filePath);
                 } else {
                     System.out.println("Invalid parameters. Please enter 'add-file <file-path>'");
+                }
+            } else if (nextCommand.contains("read-file") || nextCommand.contains("get-file")) {
+                // example command "read-file test.txt"
+                String[] args = nextCommand.split("\\s+");
+                if (args.length == 2) {
+                    String filePath = args[1];
+                    client.retrieveFile(filePath);
+                } else {
+                    System.out.println("Invalid parameters. Please enter 'read-file <file-path>'");
                 }
             } else if (nextCommand.contains(Constants.Client.CMD_GET_HOST)) {
                 client.printHost();

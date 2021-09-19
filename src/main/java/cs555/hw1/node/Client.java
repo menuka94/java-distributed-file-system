@@ -10,6 +10,8 @@ import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.ReadFileRequest;
+import cs555.hw1.wireformats.ReadFileResponse;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import cs555.hw1.wireformats.StoreChunk;
@@ -164,8 +166,16 @@ public class Client implements Node {
     }
 
 
-    public void retrieveFile(String fileName) {
+    /**
+     * Retrieve stored file from the DFS
+     *
+     * @param fileName
+     */
+    public synchronized void retrieveFile(String fileName) throws IOException {
+        ReadFileRequest readFileRequest = new ReadFileRequest();
+        readFileRequest.setFileName(fileName);
 
+        controllerConnection.sendData(readFileRequest.getBytes());
     }
 
     /**
@@ -197,9 +207,18 @@ public class Client implements Node {
             case Protocol.CONTROLLER_SENDS_CLIENT_CHUNK_SERVERS:
                 handleControllerSendsChunkServers(event);
                 break;
+            case Protocol.READ_FILE_RESPONSE:
+                handleReadFileResponse(event);
+                break;
             default:
                 log.warn("Unknown event type");
         }
+    }
+
+    private void handleReadFileResponse(Event event) {
+        ReadFileResponse readFileResponse = (ReadFileResponse) event;
+
+        // get information about the file
     }
 
     /**

@@ -10,6 +10,8 @@ import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.ProtocolLookup;
+import cs555.hw1.wireformats.ReadFileRequest;
+import cs555.hw1.wireformats.ReadFileResponse;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
@@ -30,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A controller node for managing information about chunk servers and chunks within the
  * system. There will be only 1 instance of the controller node.
- * Responsible for tracking information about the chunks chunks held by various chunk servers.
+ * Responsible for tracking information about the chunks held by various chunk servers.
  * This is achieved using heartbeats that are periodically exchanged between the controller and chunk servers.
  * Also responsible for tracking 'live' chunk servers in the system.
  * The Controller does not store anything on disk -- all information about the chunk servers
@@ -45,7 +47,6 @@ public class Controller implements Node {
     private TCPServerThread tcpServerThread;
     private TCPConnectionsCache tcpConnectionsCache;
 
-    private final ArrayList<ChunkServer> chunkServers;
     private InteractiveCommandParser commandParser;
     private Socket clientSocket;
     private TCPConnection clientConnection;
@@ -71,7 +72,6 @@ public class Controller implements Node {
     private Controller(int port) throws IOException {
         log.info("Initializing Controller on {}:{}", System.getenv("HOSTNAME"), port);
         this.port = port;
-        chunkServers = new ArrayList<>();
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
         commandParser = new InteractiveCommandParser(this);
@@ -164,9 +164,25 @@ public class Controller implements Node {
             case Protocol.SEND_MINOR_HEARTBEAT:
                 handleMinorHeartbeat(event);
                 break;
+            case Protocol.READ_FILE_REQUEST:
+                handleReadFileRequest(event);
+                break;
             default:
                 log.warn("Unknown event type");
         }
+    }
+
+    private void handleReadFileRequest(Event event) {
+        ReadFileRequest readFileRequest = (ReadFileRequest) event;
+        String fileName = readFileRequest.getFileName();
+
+        log.info("readFile: {}", fileName);
+
+        // check stored chunks for fileName
+        ReadFileResponse readFileResponse = new ReadFileResponse();
+        readFileResponse.setFileName(fileName);
+
+        // clientConnection.sendData(readFileResponse.getBytes());
     }
 
     private synchronized void handleMinorHeartbeat(Event event) {
