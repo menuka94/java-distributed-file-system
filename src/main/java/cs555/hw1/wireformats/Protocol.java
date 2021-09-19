@@ -10,9 +10,5 @@ public interface Protocol {
     int REGISTER_CHUNK_SERVER = 6;
     int REPORT_CHUNK_SERVER_REGISTRATION = 7;
 
-    int WRITE_INITIAL_CHUNK = 8;
-    int REPLICATE_CHUNK_REQUEST = 9;
-
-    int FORWARD_CHUNK = 10;
-    int STORE_CHUNK = 11;
+    int STORE_CHUNK = 8;
 }

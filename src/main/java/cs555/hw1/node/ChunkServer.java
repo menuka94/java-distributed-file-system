@@ -9,13 +9,10 @@ import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.Event;
-import cs555.hw1.wireformats.ForwardChunk;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
-import cs555.hw1.wireformats.ReplicateChunkRequest;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.StoreChunk;
-import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -111,18 +108,6 @@ public class ChunkServer implements Node {
             case Protocol.REPORT_CHUNK_SERVER_REGISTRATION:
                 handleControllerRegistrationResponse(event);
                 break;
-            case Protocol.WRITE_INITIAL_CHUNK:
-                // handleWriteInitialChunk(event);
-                log.info("WRITE_INITIAL_CHUNK: Inactive");
-                break;
-            case Protocol.REPLICATE_CHUNK_REQUEST:
-                // handleReplicateChunkRequest(event);
-                log.info("REPLICATE_CHUNK_REQUEST: Inactive");
-                break;
-            case Protocol.FORWARD_CHUNK:
-                // handleForwardChunk(event);
-                log.info("FORWARD_CHUNK: Inactive");
-                break;
             case Protocol.STORE_CHUNK:
                 try {
                     handleStoreChunk(event);
@@ -214,92 +199,6 @@ public class ChunkServer implements Node {
         }
     }
 
-    private synchronized void handleForwardChunk(Event event) {
-        log.info("handleForwardChunk(event)");
-        ForwardChunk forwardChunk = (ForwardChunk) event;
-        byte[] chunk = forwardChunk.getChunk();
-        int sequenceNumber = forwardChunk.getSequenceNumber();
-        int version = forwardChunk.getVersion();
-        String fileName = forwardChunk.getFileName();
-
-        try {
-            writeChunkToDisk(fileName, chunk, sequenceNumber, version);
-        } catch (IOException e) {
-            log.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private synchronized void handleReplicateChunkRequest(Event event) {
-        log.info("handleReplicateChunkRequest(event)");
-        ReplicateChunkRequest replicateChunkRequest = (ReplicateChunkRequest) event;
-        String fileName = replicateChunkRequest.getFileName();
-        if (fileName.equals("")) {
-            log.warn("fileName is blank");
-        }
-
-        int sequenceNumber = replicateChunkRequest.getSequenceNumber();
-        if (sequenceNumber < 1) {
-            log.warn("Invalid sequence number: {}", sequenceNumber);
-        }
-        log.info("fileName: {}, sequence: {}", fileName, sequenceNumber);
-
-        Chunk matchingChunk = null;
-
-        // read chunk from disk
-        StoredFile storedFile = filesMap.get(fileName);
-        if (storedFile == null) {
-            log.error("storedFile is null i.e. chunk not found");
-            return;
-        }
-        log.info("File '{}' found on ChunkServer. Searching for chunk-{}", fileName, sequenceNumber);
-        ArrayList<Chunk> chunks = storedFile.getChunks();
-        for (Chunk c : chunks) {
-            if (sequenceNumber == c.getSequenceNumber()) {
-                matchingChunk = c;
-            }
-        }
-
-        if (matchingChunk == null) {
-            log.warn("No matching chunk found");
-            System.exit(1);
-        }
-
-        String nextChunkServerHost = replicateChunkRequest.getNextChunkServerHost();
-        int nextChunkServerPort = replicateChunkRequest.getNextChunkServerPort();
-
-        TCPConnection nextChunkServerConnection;
-        try {
-            Socket nextChunkServerSocket = new Socket(nextChunkServerHost, nextChunkServerPort);
-            if (tcpConnectionsCache.containsConnection(nextChunkServerSocket)) {
-                nextChunkServerConnection = tcpConnectionsCache.getConnection(nextChunkServerSocket);
-            } else {
-                nextChunkServerConnection = new TCPConnection(nextChunkServerSocket, this);
-            }
-        } catch (IOException e) {
-            nextChunkServerConnection = null;
-            log.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-
-        // prepare event
-        ForwardChunk forwardChunk = new ForwardChunk();
-        try {
-            forwardChunk.setChunk(matchingChunk.getChunkFromDisk());
-            forwardChunk.setFileName(fileName);
-            forwardChunk.setSequenceNumber(matchingChunk.getSequenceNumber());
-            forwardChunk.setVersion(matchingChunk.getVersion());
-
-            nextChunkServerConnection.sendData(forwardChunk.getBytes());
-        } catch (IOException e) {
-            log.error("Error reading chunk from disk");
-            log.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        } catch (NullPointerException e) {
-            log.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
 
     /**
      * Write Chunk to Disk
@@ -334,27 +233,6 @@ public class ChunkServer implements Node {
         }
     }
 
-    private synchronized void handleWriteInitialChunk(Event event) {
-        log.info("handleWriteInitialChunk(event)");
-        WriteInitialChunk writeInitialChunk = (WriteInitialChunk) event;
-        byte[] chunk = writeInitialChunk.getChunk();
-        int sequenceNumber = writeInitialChunk.getSequenceNumber();
-        int version = writeInitialChunk.getVersion();
-        String fileName = writeInitialChunk.getFileName();
-
-        log.info("FileName: {}, SequenceNo: {}, version: {}",
-                fileName, sequenceNumber, version);
-        log.info("Hash for received Chunk: {}", FileUtil.hash(chunk));
-        log.info("Received Chunk Length: {}", chunk.length);
-
-        // write chunk to disk
-        try {
-            writeChunkToDisk(fileName, chunk, sequenceNumber, version);
-        } catch (IOException e) {
-            log.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
 
     private void handleControllerRegistrationResponse(Event event) {
         log.info("handleControllerRegistrationResponse(event)");

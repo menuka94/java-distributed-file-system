@@ -52,18 +52,6 @@ public class EventFactory {
                 ReportChunkServerRegistration chunkServerRegistration = new ReportChunkServerRegistration(data);
                 chunkServerRegistration.setSocket(socket);
                 return chunkServerRegistration;
-            //            case Protocol.WRITE_INITIAL_CHUNK:
-            //                WriteInitialChunk writeInitialChunk = new WriteInitialChunk(data);
-            //                writeInitialChunk.setSocket(socket);
-            //                return writeInitialChunk;
-            //            case Protocol.REPLICATE_CHUNK_REQUEST:
-            //                ReplicateChunkRequest replicateChunkRequest = new ReplicateChunkRequest(data);
-            //                replicateChunkRequest.setSocket(socket);
-            //                return replicateChunkRequest;
-            //            case Protocol.FORWARD_CHUNK:
-            //                ForwardChunk forwardChunk = new ForwardChunk(data);
-            //                forwardChunk.setSocket(socket);
-            //                return forwardChunk;
             case Protocol.STORE_CHUNK:
                 StoreChunk storeChunk = new StoreChunk(data);
                 storeChunk.setSocket(socket);

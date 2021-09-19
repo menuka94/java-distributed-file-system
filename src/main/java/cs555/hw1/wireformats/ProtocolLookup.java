@@ -15,12 +15,6 @@ public class ProtocolLookup {
                 return "REGISTER_CHUNK_SERVER";
             case Protocol.REPORT_CHUNK_SERVER_REGISTRATION:
                 return "REPORT_CHUNK_SERVER_REGISTRATION";
-            case Protocol.WRITE_INITIAL_CHUNK:
-                return "WRITE_INITIAL_CHUNK";
-            case Protocol.REPLICATE_CHUNK_REQUEST:
-                return "REPLICATE_CHUNK_REQUEST";
-            case Protocol.FORWARD_CHUNK:
-                return "FORWARD_CHUNK";
             case Protocol.STORE_CHUNK:
                 return "STORE_CHUNK";
             default:
