@@ -1,6 +1,7 @@
 package cs555.hw1.node;
 
 import cs555.hw1.InteractiveCommandParser;
+import cs555.hw1.node.chunkServer.ChunkServer;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
@@ -13,6 +14,7 @@ import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.SendMajorHeartbeat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +23,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,8 +53,13 @@ public class Controller implements Node {
     // ChunkServerID, Socket
     private volatile ConcurrentHashMap<Integer, Socket> chunkServerSocketMap;
 
+    // ChunkServerID, ChunkInfo
+    private volatile ConcurrentHashMap<Integer, ArrayList<String>> chunkServerFilesMap;
+
     // ChunkServerID, Port
     private volatile ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
+
+    // Socket
 
     private Random random;
 
@@ -68,6 +76,7 @@ public class Controller implements Node {
         tcpConnectionsCache.addConnection(clientSocket, clientConnection);
         chunkServerSocketMap = new ConcurrentHashMap<>();
         chunkServerListeningPortMap = new ConcurrentHashMap<>();
+        chunkServerFilesMap = new ConcurrentHashMap<>();
         random = new Random();
     }
 
@@ -146,9 +155,33 @@ public class Controller implements Node {
             case Protocol.REGISTER_CHUNK_SERVER:
                 registerChunkServer(event);
                 break;
+            case Protocol.SEND_MAJOR_HEARTBEAT:
+                handleMajorHeartbeat(event);
+                break;
+            case Protocol.SEND_MINOR_HEARTBEAT:
+                handleMinorHeartbeat(event);
+                break;
             default:
                 log.warn("Unknown event type");
         }
+    }
+
+    private synchronized void handleMinorHeartbeat(Event event) {
+    }
+
+    private synchronized void handleMajorHeartbeat(Event event) {
+        SendMajorHeartbeat heartbeat = (SendMajorHeartbeat) event;
+        Socket socket = heartbeat.getSocket();
+        String chunkServerHostname = socket.getInetAddress().getHostName();
+        long freeSpace = heartbeat.getFreeSpace();
+        int noOfChunks = heartbeat.getNoOfChunks();
+        ArrayList<String> chunks = heartbeat.getChunks();
+        for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
+            if (socket == entry.getValue()) {
+                chunkServerFilesMap.put(entry.getKey(), chunks);
+            }
+        }
+        log.info("Major Heartbeat received from ChunkServer '{}'", chunkServerHostname);
     }
 
     private synchronized void registerChunkServer(Event event) {
@@ -241,7 +274,7 @@ public class Controller implements Node {
             return;
         }
 
-        //        clientConnection.sendData(responseEvent.getBytes());
+        clientSocket = registerClient.getSocket();
         clientConnection = tcpConnectionsCache.getConnection(registerClient.getSocket());
         clientConnection.sendData(responseEvent.getBytes());
     }

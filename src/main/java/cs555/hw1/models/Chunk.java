@@ -30,6 +30,11 @@ public class Chunk {
         sliceHashes = new ArrayList<>();
     }
 
+    // get file name as stored on disk
+    public String getName() {
+        return fileName + "_chunk" + sequenceNumber;
+    }
+
     // last updated timestamp
     private String timeStamp;
 

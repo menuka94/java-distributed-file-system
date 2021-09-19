@@ -1,8 +1,9 @@
-package cs555.hw1.node;
+package cs555.hw1.node.chunkServer;
 
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.models.Chunk;
 import cs555.hw1.models.StoredFile;
+import cs555.hw1.node.Node;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
@@ -12,6 +13,8 @@ import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
+import cs555.hw1.wireformats.SendMajorHeartbeat;
+import cs555.hw1.wireformats.SendMinorHeartbeat;
 import cs555.hw1.wireformats.StoreChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Each chunk server will maintain a list of the files that it manages.
@@ -40,12 +45,16 @@ public class ChunkServer implements Node {
     private TCPConnectionsCache tcpConnectionsCache;
     private InteractiveCommandParser commandParser;
 
-    private HashMap<String, StoredFile> filesMap;
+    private volatile HashMap<String, StoredFile> filesMap;
+    private volatile ArrayList<String> chunks;
+    private String hostName;
 
     public ChunkServer(Socket controllerSocket) throws IOException {
         log.info("Initializing ChunkServer on {}", System.getenv("HOSTNAME"));
         controllerConnection = new TCPConnection(controllerSocket, this);
         filesMap = new HashMap<>();
+        chunks = new ArrayList<>();
+        hostName = controllerSocket.getLocalAddress().getHostName();
 
         tcpConnectionsCache = new TCPConnectionsCache();
         tcpServerThread = new TCPServerThread(0, this, tcpConnectionsCache);
@@ -56,6 +65,9 @@ public class ChunkServer implements Node {
     public void initialize() {
         tcpServerThread.start();
         commandParser.start();
+
+        Timer majorTimer = new Timer();
+        majorTimer.schedule(new MajorHeartbeat(), 0, Constants.ChunkServer.MAJOR_HEARTBEAT_INTERVAL);
     }
 
     public static void main(String[] args) throws IOException {
@@ -199,6 +211,43 @@ public class ChunkServer implements Node {
         }
     }
 
+    public class MajorHeartbeat extends TimerTask {
+        private final Logger log = LogManager.getLogger(MajorHeartbeat.class);
+
+        @Override
+        public void run() {
+            SendMajorHeartbeat heartbeat = new SendMajorHeartbeat();
+            heartbeat.setFreeSpace(getFreeSpaceMB());
+            heartbeat.setChunks(chunks);
+            heartbeat.setNoOfChunks(chunks.size());
+            try {
+                log.info("ChunkServer {} sending major heartbeat", hostName);
+                controllerConnection.sendData(heartbeat.getBytes());
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Get free space on node's /tmp drive (in MB)
+     *
+     * @return
+     */
+    private static long getFreeSpaceMB() {
+        long freeSpaceKB = new File("/tmp").getFreeSpace();
+        return freeSpaceKB / 1000;
+    }
+
+    public static class MinorHeartbeat extends TimerTask {
+        private static final Logger log = LogManager.getLogger(MinorHeartbeat.class);
+
+        @Override
+        public void run() {
+            SendMinorHeartbeat heartbeat = new SendMinorHeartbeat();
+        }
+    }
 
     /**
      * Write Chunk to Disk
@@ -222,6 +271,13 @@ public class ChunkServer implements Node {
         chunkObj.setSliceHashes(hashes);
         log.info("Slice Hashes computed for Chunk({}, sequence-{}, version-{})", fileName, sequenceNumber, version);
 
+        if (!chunks.contains(chunkObj.getName())) {
+            chunks.add(chunkObj.getName());
+            log.info("{} added to chunks list", chunkObj.getName());
+        } else {
+            log.warn("{} already exists. Attempting to store the same chunk more than once.", chunkObj.getName());
+        }
+
         if (filesMap.containsKey(fileName)) {
             StoredFile storedFile = filesMap.get(fileName);
             storedFile.addChunk(chunkObj);
@@ -229,7 +285,6 @@ public class ChunkServer implements Node {
             StoredFile storedFile = new StoredFile(fileName);
             storedFile.addChunk(chunkObj);
             filesMap.put(fileName, storedFile);
-            log.info("Chunk added to filesMap");
         }
     }
 

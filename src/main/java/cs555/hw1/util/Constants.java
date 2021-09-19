@@ -15,7 +15,6 @@ public class Constants {
 
     public static class Client {
         public static final String CMD_ADD_FILE = "add-file";
-        public static final int PORT = 9010;
         public static final String CMD_GET_HOST = "get-host";
         public static final String CMD_RETRIEVE = "retrieve";
     }
@@ -25,5 +24,7 @@ public class Constants {
         public static final String CMD_GET_HOST = "get-host";
         public static final int MAX_NODES = 20;
         public static final String EXT_DATA_CHUNK = "_chunk";
+        public static final int MAJOR_HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+        public static final int MINOR_HEARTBEAT_INTERVAL = 30 * 1000; // 30 seconds
     }
 }

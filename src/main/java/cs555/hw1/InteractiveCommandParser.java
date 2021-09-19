@@ -1,9 +1,9 @@
 package cs555.hw1;
 
-import cs555.hw1.node.ChunkServer;
 import cs555.hw1.node.Client;
 import cs555.hw1.node.Controller;
 import cs555.hw1.node.Node;
+import cs555.hw1.node.chunkServer.ChunkServer;
 import cs555.hw1.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -17,6 +17,10 @@ public class ProtocolLookup {
                 return "REPORT_CHUNK_SERVER_REGISTRATION";
             case Protocol.STORE_CHUNK:
                 return "STORE_CHUNK";
+            case Protocol.SEND_MAJOR_HEARTBEAT:
+                return "SEND_MAJOR_HEARTBEAT";
+            case Protocol.SEND_MINOR_HEARTBEAT:
+                return "SEND_MINOR_HEARTBEAT";
             default:
                 return "ERROR: Unknown Event";
         }
