@@ -22,7 +22,7 @@ public class StoreChunk extends Event {
     private int version;
     private String fileName;
     // number of next chunk servers (to forward the chunk)
-    private int nextChunkServersSize;
+    private int noOfNextChunkServers;
     private String[] nextChunkServerHosts;
     private int[] nextChunkServerPorts;
 
@@ -49,13 +49,18 @@ public class StoreChunk extends Event {
         din.readFully(fileNameBytes, 0, fileNameLength);
         fileName = new String(fileNameBytes);
 
+        // read chunk
+        int chunkLength = din.readInt();
+        chunk = new byte[chunkLength];
+        din.readFully(chunk, 0, chunkLength);
+
         // read noOfNextChunkServers
-        nextChunkServersSize = din.readInt();
-        nextChunkServerHosts = new String[nextChunkServersSize];
-        nextChunkServerPorts = new int[nextChunkServersSize];
+        noOfNextChunkServers = din.readInt();
+        nextChunkServerHosts = new String[noOfNextChunkServers];
+        nextChunkServerPorts = new int[noOfNextChunkServers];
 
         // read nextChunkServer hosts and ports
-        for (int i = 0; i < nextChunkServersSize; i++) {
+        for (int i = 0; i < noOfNextChunkServers; i++) {
             // read host
             int hostLength = din.readInt();
             byte[] hostBytes = new byte[hostLength];
@@ -94,19 +99,21 @@ public class StoreChunk extends Event {
             dout.write(chunk);
 
             assert (nextChunkServerHosts.length == nextChunkServerPorts.length &&
-                    nextChunkServerHosts.length == nextChunkServersSize);
+                    nextChunkServerHosts.length == noOfNextChunkServers);
 
             // write number of next servers
-            dout.writeInt(nextChunkServersSize);
+            dout.writeInt(noOfNextChunkServers);
 
-            for (int i = 0; i < nextChunkServersSize; i++) {
+            for (int i = 0; i < noOfNextChunkServers; i++) {
                 // write host
                 String host = nextChunkServerHosts[i];
+                log.info("Sending host {}: {}", (i + 1), host);
                 dout.writeInt(host.getBytes().length);
                 dout.write(host.getBytes());
 
                 // write port
-                dout.write(nextChunkServerPorts[i]);
+                dout.writeInt(nextChunkServerPorts[i]);
+                log.info("Sending port {}: {}", (i + 1), nextChunkServerPorts[i]);
             }
 
             dout.flush();
@@ -181,11 +188,11 @@ public class StoreChunk extends Event {
         this.fileName = fileName;
     }
 
-    public int getNextChunkServersSize() {
-        return nextChunkServersSize;
+    public int getNoOfNextChunkServers() {
+        return noOfNextChunkServers;
     }
 
-    public void setNextChunkServersSize(int nextChunkServersSize) {
-        this.nextChunkServersSize = nextChunkServersSize;
+    public void setNoOfNextChunkServers(int noOfNextChunkServers) {
+        this.noOfNextChunkServers = noOfNextChunkServers;
     }
 }

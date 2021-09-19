@@ -241,7 +241,7 @@ public class Controller implements Node {
             return;
         }
 
-//        clientConnection.sendData(responseEvent.getBytes());
+        //        clientConnection.sendData(responseEvent.getBytes());
         clientConnection = tcpConnectionsCache.getConnection(registerClient.getSocket());
         clientConnection.sendData(responseEvent.getBytes());
     }
@@ -256,6 +256,7 @@ public class Controller implements Node {
                 ProtocolLookup.getEventLiteral(event.getType()));
 
         String[] chunkServerHosts = new String[3];
+        String[] chunkServerHostNames = new String[3];
         int[] chunkServerPorts = new int[3];
 
         int noOfLiveChunkServers = chunkServerSocketMap.keySet().size();
@@ -269,8 +270,11 @@ public class Controller implements Node {
         for (int i = 0; i < 3; i++) {
             String chunkServerHost = chunkServerSocketMap.get(assignedIDs.get(i))
                     .getInetAddress().getHostAddress();
+            String chunkServerHostName = chunkServerSocketMap.get(assignedIDs.get(i))
+                    .getInetAddress().getCanonicalHostName();
             int chunkServerPort = chunkServerListeningPortMap.get(assignedIDs.get(i));
             chunkServerHosts[i] = chunkServerHost;
+            chunkServerHostNames[i] = chunkServerHostName;
             chunkServerPorts[i] = chunkServerPort;
         }
 
@@ -278,6 +282,7 @@ public class Controller implements Node {
                 new ControllerSendsClientChunkServers();
 
         responseEvent.setChunkServerHosts(chunkServerHosts);
+        responseEvent.setChunkServerHostNames(chunkServerHostNames);
         responseEvent.setChunkServerPorts(chunkServerPorts);
 
         try {

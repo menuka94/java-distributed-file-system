@@ -11,10 +11,8 @@ import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterClient;
-import cs555.hw1.wireformats.ReplicateChunkRequest;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import cs555.hw1.wireformats.StoreChunk;
-import cs555.hw1.wireformats.WriteInitialChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,14 +53,14 @@ public class Client implements Node {
         Socket controllerSocket = new Socket(controllerHost, controllerPort);
         Client client = new Client(controllerSocket);
         client.initialize();
-//        TCPConnection tcpConnection;
-//        if (client.tcpConnectionsCache.containsConnection(controllerSocket)) {
-//            log.info("Connection found in TCPConnectionsCache");
-//            tcpConnection = client.tcpConnectionsCache.getConnection(controllerSocket);
-//        } else {
-//            log.info("Connection not found in TCPConnectionsCache. Creating new connection");
-//            tcpConnection = new TCPConnection(controllerSocket, client);
-//        }
+        //        TCPConnection tcpConnection;
+        //        if (client.tcpConnectionsCache.containsConnection(controllerSocket)) {
+        //            log.info("Connection found in TCPConnectionsCache");
+        //            tcpConnection = client.tcpConnectionsCache.getConnection(controllerSocket);
+        //        } else {
+        //            log.info("Connection not found in TCPConnectionsCache. Creating new connection");
+        //            tcpConnection = new TCPConnection(controllerSocket, client);
+        //        }
     }
 
     public Client(Socket controllerSocket) throws IOException {
@@ -144,16 +142,15 @@ public class Client implements Node {
 
             storeChunk.setNextChunkServerHosts(nextChunkServerHosts);
             storeChunk.setNextChunkServerPorts(nextChunkServerPorts);
-            storeChunk.setNextChunkServersSize(Constants.REPLICATION_LEVEL - 1);
+            storeChunk.setNoOfNextChunkServers(Constants.REPLICATION_LEVEL - 1);
 
             chunkServerConnectionA.sendData(storeChunk.getBytes());
 
-
+            log.info("Chunk {} processed. Proceeding to the next chunk.", i + 1);
             chunkServerSockets.clear();
 
             // contact controller and get a list of 3 chunk servers
             sendChunkServerRequestToController();
-            break;
         } // end for each chunk loop
 
         // contact the 3 chunk servers (A, B, C) to store the file
@@ -252,12 +249,13 @@ public class Client implements Node {
         ControllerSendsClientChunkServers sendsClientChunkServersEvent =
                 (ControllerSendsClientChunkServers) event;
         String[] hosts = sendsClientChunkServersEvent.getChunkServerHosts();
+        String[] hostNames = sendsClientChunkServersEvent.getChunkServerHostNames();
         int[] ports = sendsClientChunkServersEvent.getChunkServerPorts();
 
         ArrayList<Socket> chunkServers = new ArrayList<>();
         System.out.println("Chunk Servers Returned: ");
         for (int i = 0; i < 3; i++) {
-            System.out.println(hosts[i] + ": " + ports[i]);
+            System.out.println(hostNames[i] + " (" + hosts[i] + ":" + ports[i] + ")");
             try {
                 chunkServers.add(new Socket(hosts[i], ports[i]));
             } catch (IOException e) {

@@ -112,21 +112,22 @@ public class ChunkServer implements Node {
                 handleControllerRegistrationResponse(event);
                 break;
             case Protocol.WRITE_INITIAL_CHUNK:
-//                handleWriteInitialChunk(event);
+                // handleWriteInitialChunk(event);
                 log.info("WRITE_INITIAL_CHUNK: Inactive");
                 break;
             case Protocol.REPLICATE_CHUNK_REQUEST:
-//                handleReplicateChunkRequest(event);
+                // handleReplicateChunkRequest(event);
                 log.info("REPLICATE_CHUNK_REQUEST: Inactive");
                 break;
             case Protocol.FORWARD_CHUNK:
-//                handleForwardChunk(event);
+                // handleForwardChunk(event);
                 log.info("FORWARD_CHUNK: Inactive");
                 break;
             case Protocol.STORE_CHUNK:
                 try {
                     handleStoreChunk(event);
                 } catch (IOException e) {
+                    log.error("Error storing chunk");
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
                 }
@@ -159,7 +160,7 @@ public class ChunkServer implements Node {
         nextStoreChunkEvent.setSequenceNumber(sequenceNumber);
         nextStoreChunkEvent.setFileName(fileName);
 
-        int nextChunkServersSize = storeChunk.getNextChunkServersSize();
+        int nextChunkServersSize = storeChunk.getNoOfNextChunkServers();
         log.info("nextChunkServersSize: {}", nextChunkServersSize);
         String[] nextChunkServerHosts = storeChunk.getNextChunkServerHosts();
         int[] nextChunkServerPorts = storeChunk.getNextChunkServerPorts();
@@ -173,7 +174,7 @@ public class ChunkServer implements Node {
             String[] newNextChunkServerHosts = Arrays.copyOfRange(nextChunkServerHosts, 1, nextChunkServersSize);
             int[] newNextChunkServerPorts = Arrays.copyOfRange(nextChunkServerPorts, 1, nextChunkServersSize);
 
-            nextStoreChunkEvent.setNextChunkServersSize(nextChunkServersSize - 1);
+            nextStoreChunkEvent.setNoOfNextChunkServers(nextChunkServersSize - 1);
             nextStoreChunkEvent.setNextChunkServerHosts(newNextChunkServerHosts);
             nextStoreChunkEvent.setNextChunkServerPorts(newNextChunkServerPorts);
 
@@ -191,7 +192,7 @@ public class ChunkServer implements Node {
             log.info("Replicated on B: {}._part{}", fileName, sequenceNumber);
             nextSocket = new Socket(nextChunkServerHosts[0], nextChunkServerPorts[0]);
 
-            nextStoreChunkEvent.setNextChunkServersSize(0);
+            nextStoreChunkEvent.setNoOfNextChunkServers(0);
             nextStoreChunkEvent.setNextChunkServerHosts(new String[0]);
             nextStoreChunkEvent.setNextChunkServerPorts(new int[0]);
 
