@@ -23,4 +23,12 @@ public class StoredFile {
     public void addChunk(Chunk chunk) {
         chunks.add(chunk);
     }
+
+    @Override
+    public String toString() {
+        return "StoredFile{" +
+                "name='" + name + '\'' +
+                ", chunks=" + chunks +
+                '}';
+    }
 }

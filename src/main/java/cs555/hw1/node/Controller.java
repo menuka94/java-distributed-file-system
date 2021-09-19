@@ -56,6 +56,8 @@ public class Controller implements Node {
     // ChunkServerID, ChunkInfo
     private volatile ConcurrentHashMap<Integer, ArrayList<String>> chunkServerFilesMap;
 
+    private volatile ConcurrentHashMap<Integer, Long> chunkServerFreeSpaceMap;
+
     // ChunkServerID, Port
     private volatile ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
 
@@ -77,6 +79,7 @@ public class Controller implements Node {
         chunkServerSocketMap = new ConcurrentHashMap<>();
         chunkServerListeningPortMap = new ConcurrentHashMap<>();
         chunkServerFilesMap = new ConcurrentHashMap<>();
+        chunkServerFreeSpaceMap = new ConcurrentHashMap<>();
         random = new Random();
     }
 
@@ -175,13 +178,18 @@ public class Controller implements Node {
         String chunkServerHostname = socket.getInetAddress().getHostName();
         long freeSpace = heartbeat.getFreeSpace();
         int noOfChunks = heartbeat.getNoOfChunks();
+
+        //update chunks/files map
         ArrayList<String> chunks = heartbeat.getChunks();
         for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
             if (socket == entry.getValue()) {
                 chunkServerFilesMap.put(entry.getKey(), chunks);
             }
+            chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
-        log.info("Major Heartbeat received from ChunkServer '{}'", chunkServerHostname);
+
+        log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={}, #chunks={})",
+                chunkServerHostname, freeSpace, noOfChunks);
     }
 
     private synchronized void registerChunkServer(Event event) {
@@ -323,6 +331,22 @@ public class Controller implements Node {
         } catch (IOException e) {
             log.error(e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Print information about chunks in all registered chunk servers
+     */
+    public synchronized void printChunks() {
+        for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerFilesMap.entrySet()) {
+            Integer id = entry.getKey();
+            String hostName = chunkServerSocketMap.get(id).getInetAddress().getHostName();
+            System.out.println("-----------------------------------------");
+            System.out.println("Chunk Server: " + hostName);
+            System.out.println("[*] Free Space: " + chunkServerFreeSpaceMap.get(id));
+            for (String chunk : entry.getValue()) {
+                System.out.println("[*] " + chunk);
+            }
         }
     }
 

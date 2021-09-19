@@ -135,7 +135,7 @@ public class ChunkServer implements Node {
     }
 
     private synchronized void handleStoreChunk(Event event) throws IOException {
-        log.info("handleStoreChunk(event)");
+        log.debug("handleStoreChunk(event)");
         StoreChunk storeChunk = (StoreChunk) event;
         String fileName = storeChunk.getFileName();
         int sequenceNumber = storeChunk.getSequenceNumber();
@@ -166,7 +166,7 @@ public class ChunkServer implements Node {
         TCPConnection nextConnection;
         if (nextChunkServersSize == 2) {
             // chunk has only been written once (on A). need to forward from A to B
-            log.info("Written on A: {}._part{}", fileName, sequenceNumber);
+            log.info("Written on A: {}.{}{}", fileName, Constants.ChunkServer.EXT_DATA_CHUNK, sequenceNumber);
             nextSocket = new Socket(nextChunkServerHosts[0], nextChunkServerPorts[0]);
             String[] newNextChunkServerHosts = Arrays.copyOfRange(nextChunkServerHosts, 1, nextChunkServersSize);
             int[] newNextChunkServerPorts = Arrays.copyOfRange(nextChunkServerPorts, 1, nextChunkServersSize);
@@ -181,12 +181,12 @@ public class ChunkServer implements Node {
                 nextConnection = new TCPConnection(nextSocket, this);
             }
 
-            log.info("Forwarding {}._part{} to B", fileName, sequenceNumber);
+            log.info("Forwarding {}.{}{} to B", fileName, Constants.ChunkServer.EXT_DATA_CHUNK, sequenceNumber);
             nextConnection.sendData(nextStoreChunkEvent.getBytes());
 
         } else if (nextChunkServersSize == 1) {
             // chunk has been written twice (on A and B). forward from B to C
-            log.info("Replicated on B: {}._part{}", fileName, sequenceNumber);
+            log.info("Replicated on B: {}.{}{}", fileName, Constants.ChunkServer.EXT_DATA_CHUNK, sequenceNumber);
             nextSocket = new Socket(nextChunkServerHosts[0], nextChunkServerPorts[0]);
 
             nextStoreChunkEvent.setNoOfNextChunkServers(0);
@@ -199,15 +199,25 @@ public class ChunkServer implements Node {
                 nextConnection = new TCPConnection(nextSocket, this);
             }
 
-            log.info("Forwarding {}._part{} to C", fileName, sequenceNumber);
+            log.info("Forwarding {}.{}{} to C", fileName, Constants.ChunkServer.EXT_DATA_CHUNK, sequenceNumber);
             nextConnection.sendData(nextStoreChunkEvent.getBytes());
         } else if (nextChunkServersSize == 0) {
             // chunk on C
             // already written to disk above
             // replication complete
-            log.info("Replicated on C {}._part{}", fileName, sequenceNumber);
+            log.info("Replicated on C {}.{}{}", fileName, Constants.ChunkServer.EXT_DATA_CHUNK, sequenceNumber);
         } else {
             log.warn("Invalid number of nextChunkServers: {}", nextChunkServersSize);
+        }
+    }
+
+    /**
+     * Print names of all chunks available at the ChunkServer
+     */
+    public synchronized void printChunks() {
+        System.out.println("No. of Chunks: " + chunks.size());
+        for (String chunk : chunks) {
+            System.out.println(chunk);
         }
     }
 

@@ -22,12 +22,23 @@ public class Chunk {
 
     }
 
-    public Chunk(int version, int sequenceNumber, String fileName) {
+    public Chunk(int sequenceNumber, int version, String fileName) {
         this.version = version;
         this.sequenceNumber = sequenceNumber;
         this.fileName = fileName;
         this.valid = true;
         sliceHashes = new ArrayList<>();
+    }
+
+    @Override
+    public String toString() {
+        return "Chunk{" +
+                "fileName='" + fileName + '\'' +
+                ", sequenceNumber=" + sequenceNumber +
+                ", version=" + version +
+                ", valid=" + valid +
+                ", timeStamp='" + timeStamp + '\'' +
+                '}';
     }
 
     // get file name as stored on disk

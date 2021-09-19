@@ -56,6 +56,10 @@ public class EventFactory {
                 StoreChunk storeChunk = new StoreChunk(data);
                 storeChunk.setSocket(socket);
                 return storeChunk;
+            case Protocol.SEND_MAJOR_HEARTBEAT:
+                SendMajorHeartbeat majorHeartbeat = new SendMajorHeartbeat(data);
+                majorHeartbeat.setSocket(socket);
+                return majorHeartbeat;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

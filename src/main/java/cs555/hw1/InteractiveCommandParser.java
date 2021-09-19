@@ -13,6 +13,7 @@ import java.util.Scanner;
 
 public class InteractiveCommandParser extends Thread {
     private static final Logger log = LogManager.getLogger(InteractiveCommandParser.class);
+
     private Scanner scanner;
     private Node node;
     private boolean acceptingCommands;
@@ -69,8 +70,11 @@ public class InteractiveCommandParser extends Thread {
             nextCommand = scanner.nextLine().trim();
             if (nextCommand.contains(Constants.Controller.CMD_GET_HOST)) {
                 controller.printHost();
-            } else if (nextCommand.equals(Constants.Controller.CMD_LIST_CHUNK_SERVERS)) {
+            } else if (nextCommand.equals(Constants.Controller.CMD_LIST_CHUNK_SERVERS) ||
+                    nextCommand.equals("list-cs")) {
                 controller.listChunkServers();
+            } else if (nextCommand.contains("list-chunks") || nextCommand.contains("get-chunks")) {
+                controller.printChunks();
             } else if (nextCommand.equals("")) {
                 continue;
             } else {
@@ -88,7 +92,9 @@ public class InteractiveCommandParser extends Thread {
             nextCommand = scanner.nextLine().trim();
             if (nextCommand.contains(Constants.ChunkServer.CMD_GET_HOST)) {
                 chunkServer.printHost();
-            } else if (nextCommand.trim().equals("")) {
+            } else if (nextCommand.contains("list-chunks") || nextCommand.contains("get-chunks")) {
+                chunkServer.printChunks();
+            } else if (nextCommand.equals("")) {
                 continue;
             } else {
                 System.out.println("Invalid command");

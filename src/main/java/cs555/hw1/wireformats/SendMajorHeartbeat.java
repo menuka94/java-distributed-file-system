@@ -125,4 +125,13 @@ public class SendMajorHeartbeat extends Event {
     public void setFreeSpace(long freeSpace) {
         this.freeSpace = freeSpace;
     }
+
+    @Override
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
 }
