@@ -25,7 +25,10 @@ chunk-server-debug:
 	cd $(CLASSES_DIR) && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005  -cp $(JAR_FILE) cs555.hw1.node.chunkServer.ChunkServer arkansas 9000
 
 client:
-	cd $(CLASSES_DIR) && java -cp $(JAR_FILE) cs555.hw1.node.Client arkansas 9000
+	cd $(CLASSES_DIR) && java  -cp $(JAR_FILE) cs555.hw1.node.Client arkansas 9000
+
+client-debug:
+	cd $(CLASSES_DIR) && java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -cp $(JAR_FILE) cs555.hw1.node.Client arkansas 9000
 
 clean:
 	rm -rf build
