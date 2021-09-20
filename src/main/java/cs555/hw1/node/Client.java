@@ -21,8 +21,12 @@ import cs555.hw1.wireformats.StoreChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -287,8 +291,30 @@ public class Client implements Node {
                 }
             }
 
-            // all chunks have been received. Proceed to assembling the file
+            // all chunks have been received. Proceed to assembling the file.
             log.info("Received all chunks for {}", fileName);
+            ArrayList<byte[]> bytes = new ArrayList<>();
+            for (String iChunk : readingKeySet) {
+                bytes.add(readingChunksMap.get(iChunk));
+            }
+
+            try {
+                Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
+                FileOutputStream fos = new FileOutputStream(Constants.CHUNK_DIR + File.separator + fileName);
+                for (byte[] aByte : bytes) {
+                    log.info("length of chunk: {}", aByte.length);
+                    fos.write(aByte);
+                }
+
+                log.info("Successfully assembled {}!", fileName);
+            } catch (FileNotFoundException e) {
+                log.error("Error assembling {}", fileName);
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
     }
 
