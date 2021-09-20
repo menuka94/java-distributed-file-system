@@ -13,6 +13,7 @@ import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
+import cs555.hw1.wireformats.RetrieveChunkRequest;
 import cs555.hw1.wireformats.SendMajorHeartbeat;
 import cs555.hw1.wireformats.SendMinorHeartbeat;
 import cs555.hw1.wireformats.StoreChunk;
@@ -129,8 +130,28 @@ public class ChunkServer implements Node {
                     e.printStackTrace();
                 }
                 break;
+            case Protocol.RETRIEVE_CHUNK_REQUEST:
+                handleRetrieveChunkRequest(event);
+                break;
             default:
                 log.warn("Unknown event type: {}", type);
+        }
+    }
+
+    /**
+     * Check if the chunk requested by client is stored in ChunkServer's disk.
+     * If it exists, read and send the chunk data
+     * @param event
+     */
+    private synchronized void handleRetrieveChunkRequest(Event event) {
+        RetrieveChunkRequest request = (RetrieveChunkRequest) event;
+        String chunkName = request.getChunkName();
+        log.info("Searching for Chunk: {}", chunkName);
+        boolean chunkFound = chunks.contains(chunkName);
+        if (chunkFound) {
+            log.info("{} found", chunkName);
+        } else {
+            log.warn("{} not found", chunkName);
         }
     }
 

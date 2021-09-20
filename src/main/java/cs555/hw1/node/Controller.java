@@ -190,19 +190,71 @@ public class Controller implements Node {
                 fileName, noOfChunks, fileSize);
     }
 
+    /**
+     * Send ChunkServers (host, port) to client for each of the chunks for the file requested
+     */
     private void handleReadFileRequest(Event event) {
         ReadFileRequest readFileRequest = (ReadFileRequest) event;
         String fileName = readFileRequest.getFileName();
 
         log.info("readFile: {}", fileName);
 
-        // find total number of chunks for the requested fil
+        int noOfChunks = 0;
+        int fileSize = 0;
+        boolean fileFound = false;
+        for (FileInfo fileInfo : fileInfos) {
+            if (fileInfo.getFileName().equals(fileName)) {
+                fileFound = true;
+                noOfChunks = fileInfo.getNoOfChunks();
+                fileSize = fileInfo.getFileSize();
+            }
+        }
 
-        // check stored chunks for fileName
+        if (!fileFound) {
+            log.warn("File '{}' not found", fileName);
+            return;
+        }
+
+        // find chunk servers that contain each chunk of the file
+        String[] chunkServerHosts = new String[noOfChunks];
+        int[] chunkServerPorts = new int[noOfChunks];
+
+        for (int i = 0; i < noOfChunks; i++) {
+            String chunkName = fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
+
+            // iterate through map <ChunkServerID, chunkNames>
+            for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
+                if (entry.getValue().contains(chunkName)) {
+                    // found a chunk server containing the chunk we're looking for
+                    int chunkServerId = entry.getKey();
+                    Socket socket = chunkServerSocketMap.get(chunkServerId);
+                    chunkServerHosts[i] = socket.getInetAddress().getHostAddress();
+                    chunkServerPorts[i] = socket.getPort();
+                }
+            }
+        }
+
+        // sanity check
+        for (String chunkServerHost : chunkServerHosts) {
+            if ("".equals(chunkServerHost)) {
+                log.error("No ChunkServer with the needed chunk found.");
+            }
+        }
+
+        // send response to client
         ReadFileResponse readFileResponse = new ReadFileResponse();
         readFileResponse.setFileName(fileName);
+        readFileResponse.setNoOfChunks(noOfChunks);
+        readFileResponse.setFileSize(fileSize);
+        readFileResponse.setChunkServerHosts(chunkServerHosts);
+        readFileResponse.setChunkServerPorts(chunkServerPorts);
 
-        // clientConnection.sendData(readFileResponse.getBytes());
+        try {
+            clientConnection.sendData(readFileResponse.getBytes());
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
     }
 
     private synchronized void handleMinorHeartbeat(Event event) {

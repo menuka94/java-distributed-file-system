@@ -72,6 +72,14 @@ public class EventFactory {
                 SendFileInfo sendFileInfo = new SendFileInfo(data);
                 sendFileInfo.setSocket(socket);
                 return sendFileInfo;
+            case Protocol.RETRIEVE_CHUNK_REQUEST:
+                RetrieveChunkRequest retrieveChunkRequest = new RetrieveChunkRequest(data);
+                retrieveChunkRequest.setSocket(socket);
+                return retrieveChunkRequest;
+            case Protocol.RETRIEVE_CHUNK_RESPONSE:
+                RetrieveChunkResponse retrieveChunkResponse = new RetrieveChunkResponse(data);
+                retrieveChunkResponse.setSocket(socket);
+                return retrieveChunkResponse;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

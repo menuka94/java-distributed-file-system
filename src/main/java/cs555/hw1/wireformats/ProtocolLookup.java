@@ -23,10 +23,16 @@ public class ProtocolLookup {
                 return "SEND_MINOR_HEARTBEAT";
             case Protocol.READ_FILE_REQUEST:
                 return "READ_FILE_REQUEST";
+            case Protocol.READ_FILE_RESPONSE:
+                return "READ_FILE_RESPONSE";
             case Protocol.SEND_FILE_INFO:
                 return "SEND_FILE_INFO";
+            case Protocol.RETRIEVE_CHUNK_REQUEST:
+                return "RETRIEVE_CHUNK";
+            case Protocol.RETRIEVE_CHUNK_RESPONSE:
+                return "RETRIEVE_CHUNK_RESPONSE";
             default:
-                return "ERROR: Unknown Event";
+                return "ERROR: Unknown Event: " + type;
         }
     }
 }

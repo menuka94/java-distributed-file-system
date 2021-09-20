@@ -14,6 +14,7 @@ import cs555.hw1.wireformats.ReadFileRequest;
 import cs555.hw1.wireformats.ReadFileResponse;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.RetrieveChunkRequest;
 import cs555.hw1.wireformats.SendFileInfo;
 import cs555.hw1.wireformats.StoreChunk;
 import org.apache.logging.log4j.LogManager;
@@ -221,17 +222,55 @@ public class Client implements Node {
                 handleControllerSendsChunkServers(event);
                 break;
             case Protocol.READ_FILE_RESPONSE:
-                handleReadFileResponse(event);
+                try {
+                    handleReadFileResponse(event);
+                } catch (IOException e) {
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
                 break;
             default:
                 log.warn("Unknown event type");
         }
     }
 
-    private void handleReadFileResponse(Event event) {
+    /**
+     * Process response sent by controller containing ChunkServer information for each chunk of the file needed.
+     * @param event
+     */
+    private void handleReadFileResponse(Event event) throws IOException {
         ReadFileResponse readFileResponse = (ReadFileResponse) event;
 
         // get information about the file
+        String fileName = readFileResponse.getFileName();
+        int fileSize = readFileResponse.getFileSize();
+        int noOfChunks = readFileResponse.getNoOfChunks();
+        String[] chunkServerHosts = readFileResponse.getChunkServerHosts();
+        String[] chunkServerHostNames = readFileResponse.getChunkServerHostNames();
+        int[] chunkServerPorts = readFileResponse.getChunkServerPorts();
+
+        log.info("ChunkServer information for file '{}': size={}, #chunks={}, hosts={}, ports={}, hostNames={}",
+                fileName, fileSize, noOfChunks, chunkServerHosts, chunkServerPorts, chunkServerHostNames);
+
+        // sanity check
+        assert (chunkServerHosts.length == chunkServerPorts.length &&
+                chunkServerHosts.length == chunkServerHostNames.length);
+
+        // contact chunk servers and retrieve the chunks
+        for (int i = 0; i < noOfChunks; i++) {
+            Socket socket = new Socket(chunkServerHosts[i], chunkServerPorts[i]);
+            TCPConnection tcpConnection;
+            if (tcpConnectionsCache.containsConnection(socket)) {
+                tcpConnection = tcpConnectionsCache.getConnection(socket);
+            } else {
+                tcpConnection = new TCPConnection(socket, this);
+            }
+
+            RetrieveChunkRequest request = new RetrieveChunkRequest();
+            request.setChunkName(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
+
+            tcpConnection.sendData(request.getBytes());
+        }
     }
 
     /**
@@ -258,10 +297,11 @@ public class Client implements Node {
      * @param event
      */
     private void handleControllerRegistrationResponse(Event event) {
-        log.info("handleControllerRegistration");
+        log.debug("handleControllerRegistration");
         ReportClientRegistration registrationEvent = (ReportClientRegistration) event;
         int successStatus = registrationEvent.getSuccessStatus();
         String infoString = registrationEvent.getInfoString();
+        controllerSocket = registrationEvent.getSocket();
 
         log.info("{} ({})", infoString, successStatus);
         if (successStatus == -1) {
@@ -277,7 +317,7 @@ public class Client implements Node {
      * @return
      */
     private void handleControllerSendsChunkServers(Event event) {
-        log.info("handleControllerSendsChunkServers(event)");
+        log.debug("handleControllerSendsChunkServers(event)");
         ControllerSendsClientChunkServers sendsClientChunkServersEvent =
                 (ControllerSendsClientChunkServers) event;
         String[] hosts = sendsClientChunkServersEvent.getChunkServerHosts();

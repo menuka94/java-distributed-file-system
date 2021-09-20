@@ -13,40 +13,33 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-/**
- * Client sends file info to the controller when asked to add a new file
- * (at the same time
- */
-public class SendFileInfo extends Event {
-    private static final Logger log = LogManager.getLogger(SendFileInfo.class);
+public class RetrieveChunkResponse extends Event {
+    private static final Logger log = LogManager.getLogger(ReadFileResponse.class);
 
     private Socket socket;
-    private String fileName;
-    private int fileSize;
-    private int noOfChunks;
+    private String chunkName;
+    private byte[] chunk;
 
-    public SendFileInfo() {
+    public RetrieveChunkResponse() {
 
     }
 
-    public SendFileInfo(byte[] marshalledBytes) throws IOException {
+    public RetrieveChunkResponse(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
         byte messageType = din.readByte();
         EventValidator.validateEventType(messageType, getType(), log);
 
-        // read file name
-        int fileNameLength = din.readInt();
-        byte[] fileNameBytes = new byte[fileNameLength];
-        din.readFully(fileNameBytes, 0, fileNameLength);
-        fileName = new String(fileNameBytes);
+        // read chunkName
+        int chunkNameLength = din.readInt();
+        byte[] chunkNameBytes = new byte[chunkNameLength];
+        din.readFully(chunkNameBytes, 0, chunkNameLength);
+        chunkName = new String(chunkNameBytes);
 
-        // read no. of chunks
-        noOfChunks = din.readInt();
-
-        // read file size
-        fileSize = din.readInt();
+        // read chunk (data)
+        int chunkLength = din.readInt();
+        din.readFully(chunk, 0, chunkLength);
 
         baInputStream.close();
         din.close();
@@ -61,28 +54,26 @@ public class SendFileInfo extends Event {
         try {
             dout.writeByte(getType());
 
-            // write file name
-            dout.writeInt(fileName.getBytes().length);
-            dout.write(fileName.getBytes());
+            // write chunk name
+            dout.writeInt(chunkName.getBytes().length);
+            dout.write(chunkName.getBytes());
 
-            // write no. of chunks
-            dout.writeInt(noOfChunks);
-
-            // write fileSize
-            dout.writeInt(fileSize);
+            // write chunk
+            dout.writeInt(chunk.length);
+            dout.write(chunk);
 
             dout.flush();
             marshalledBytes = baOutputStream.toByteArray();
         } catch (IOException e) {
-            log.error(e.getLocalizedMessage());
             e.printStackTrace();
         }
+
         return marshalledBytes;
     }
 
     @Override
     public int getType() {
-        return Protocol.SEND_FILE_INFO;
+        return Protocol.READ_FILE_RESPONSE;
     }
 
     @Override
@@ -94,27 +85,19 @@ public class SendFileInfo extends Event {
         this.socket = socket;
     }
 
-    public String getFileName() {
-        return fileName;
+    public byte[] getChunk() {
+        return chunk;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setChunk(byte[] chunk) {
+        this.chunk = chunk;
     }
 
-    public int getNoOfChunks() {
-        return noOfChunks;
+    public String getChunkName() {
+        return chunkName;
     }
 
-    public void setNoOfChunks(int noOfChunks) {
-        this.noOfChunks = noOfChunks;
-    }
-
-    public int getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(int fileSize) {
-        this.fileSize = fileSize;
+    public void setChunkName(String chunkName) {
+        this.chunkName = chunkName;
     }
 }
