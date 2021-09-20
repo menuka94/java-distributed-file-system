@@ -301,10 +301,16 @@ public class Client implements Node {
             try {
                 Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
                 FileOutputStream fos = new FileOutputStream(Constants.CHUNK_DIR + File.separator + fileName);
-                for (byte[] aByte : bytes) {
-                    log.info("length of chunk: {}", aByte.length);
-                    fos.write(aByte);
+                // combine all chunks
+                byte[][] allChunks = new byte[noOfChunks][];
+                for (int i = 0; i < noOfChunks; i++) {
+                    allChunks[i] = readingChunksMap.get(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
                 }
+                fos.write(FileUtil.concat(allChunks));
+//                for (byte[] aByte : bytes) {
+//                    log.info("length of chunk: {}", aByte.length);
+//                    fos.write(aByte);
+//                }
 
                 log.info("Successfully assembled {}!", fileName);
             } catch (FileNotFoundException e) {
