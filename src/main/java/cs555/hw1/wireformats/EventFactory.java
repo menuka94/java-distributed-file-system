@@ -68,6 +68,10 @@ public class EventFactory {
                 ReadFileResponse readFileResponse = new ReadFileResponse(data);
                 readFileResponse.setSocket(socket);
                 return readFileResponse;
+            case Protocol.SEND_FILE_INFO:
+                SendFileInfo sendFileInfo = new SendFileInfo(data);
+                sendFileInfo.setSocket(socket);
+                return sendFileInfo;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

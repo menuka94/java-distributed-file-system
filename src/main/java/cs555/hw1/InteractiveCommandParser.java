@@ -75,6 +75,8 @@ public class InteractiveCommandParser extends Thread {
                 controller.listChunkServers();
             } else if (nextCommand.contains("list-chunks") || nextCommand.contains("get-chunks")) {
                 controller.printChunks();
+            } else if (nextCommand.contains("list-files") || nextCommand.contains("get-files")) {
+                controller.printFiles();
             } else if (nextCommand.equals("")) {
                 continue;
             } else {

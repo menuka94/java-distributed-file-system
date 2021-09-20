@@ -6,6 +6,7 @@ import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
+import cs555.hw1.util.controller.FileInfo;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
@@ -16,6 +17,7 @@ import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.SendFileInfo;
 import cs555.hw1.wireformats.SendMajorHeartbeat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -55,14 +58,15 @@ public class Controller implements Node {
     private volatile ConcurrentHashMap<Integer, Socket> chunkServerSocketMap;
 
     // ChunkServerID, ChunkInfo
-    private volatile ConcurrentHashMap<Integer, ArrayList<String>> chunkServerFilesMap;
+    private volatile ConcurrentHashMap<Integer, ArrayList<String>> chunkServerChunksMap;
 
     private volatile ConcurrentHashMap<Integer, Long> chunkServerFreeSpaceMap;
 
     // ChunkServerID, Port
     private volatile ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
 
-    // Socket
+    // File names and number of chunks (for all files in the system)
+    private volatile Vector<FileInfo> fileInfos;
 
     private Random random;
 
@@ -78,8 +82,9 @@ public class Controller implements Node {
         tcpConnectionsCache.addConnection(clientSocket, clientConnection);
         chunkServerSocketMap = new ConcurrentHashMap<>();
         chunkServerListeningPortMap = new ConcurrentHashMap<>();
-        chunkServerFilesMap = new ConcurrentHashMap<>();
+        chunkServerChunksMap = new ConcurrentHashMap<>();
         chunkServerFreeSpaceMap = new ConcurrentHashMap<>();
+        fileInfos = new Vector<>();
         random = new Random();
     }
 
@@ -145,7 +150,7 @@ public class Controller implements Node {
         log.info("Event type: {}", type);
         switch (type) {
             case Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER:
-                sendChunkServerToClient(event);
+                sendChunkServersToClient(event);
                 break;
             case Protocol.REGISTER_CLIENT:
                 try {
@@ -167,9 +172,22 @@ public class Controller implements Node {
             case Protocol.READ_FILE_REQUEST:
                 handleReadFileRequest(event);
                 break;
+            case Protocol.SEND_FILE_INFO:
+                handleSendFileInfo(event);
+                break;
             default:
                 log.warn("Unknown event type");
         }
+    }
+
+    private void handleSendFileInfo(Event event) {
+        SendFileInfo sendFileInfo = (SendFileInfo) event;
+        String fileName = sendFileInfo.getFileName();
+        int noOfChunks = sendFileInfo.getNoOfChunks();
+        int fileSize = sendFileInfo.getFileSize();
+        fileInfos.add(new FileInfo(fileName, noOfChunks, fileSize));
+        log.info("Added new file info: (name={}, #chunks={}, size={} KB)",
+                fileName, noOfChunks, fileSize);
     }
 
     private void handleReadFileRequest(Event event) {
@@ -177,6 +195,8 @@ public class Controller implements Node {
         String fileName = readFileRequest.getFileName();
 
         log.info("readFile: {}", fileName);
+
+        // find total number of chunks for the requested fil
 
         // check stored chunks for fileName
         ReadFileResponse readFileResponse = new ReadFileResponse();
@@ -199,7 +219,7 @@ public class Controller implements Node {
         ArrayList<String> chunks = heartbeat.getChunks();
         for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
             if (socket == entry.getValue()) {
-                chunkServerFilesMap.put(entry.getKey(), chunks);
+                chunkServerChunksMap.put(entry.getKey(), chunks);
             }
             chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
@@ -265,7 +285,7 @@ public class Controller implements Node {
 
 
     private void registerClient(Event event) throws IOException {
-        log.info("registerClient(event)");
+        log.debug("registerClient(event)");
 
         // Process Request
         RegisterClient registerClient = (RegisterClient) event;
@@ -308,8 +328,8 @@ public class Controller implements Node {
      *
      * @param event
      */
-    private synchronized void sendChunkServerToClient(Event event) {
-        log.info("sendChunkServerToClient(event): {}",
+    private synchronized void sendChunkServersToClient(Event event) {
+        log.debug("sendChunkServerToClient(event): {}",
                 ProtocolLookup.getEventLiteral(event.getType()));
 
         String[] chunkServerHosts = new String[3];
@@ -354,17 +374,27 @@ public class Controller implements Node {
      * Print information about chunks in all registered chunk servers
      */
     public synchronized void printChunks() {
-        for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerFilesMap.entrySet()) {
-            Integer id = entry.getKey();
+        for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
+            Integer id = entry.getKey(); // ChunkServer ID
             String hostName = chunkServerSocketMap.get(id).getInetAddress().getHostName();
             System.out.println("-----------------------------------------");
             System.out.println("Chunk Server: " + hostName);
-            System.out.println("[*] Free Space: " + chunkServerFreeSpaceMap.get(id));
+            System.out.println("[*] Free Space: " + chunkServerFreeSpaceMap.get(id) + " MB");
             for (String chunk : entry.getValue()) {
                 System.out.println("[*] " + chunk);
             }
         }
     }
 
-    // TODO: implement heartbeats
+    /**
+     * Print information about files in the DFS
+     */
+    public void printFiles() {
+        for (FileInfo fileInfo : fileInfos) {
+            System.out.println(fileInfo.getFileName() + ": (size = " + fileInfo.getFileSize() +
+                    " KB, #chunks: " + fileInfo.getNoOfChunks() + ")");
+        }
+    }
+
+    // TODO: implement heartbeat to detect ChunkServer failures
 }

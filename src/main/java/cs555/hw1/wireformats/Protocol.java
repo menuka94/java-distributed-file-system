@@ -13,4 +13,5 @@ public interface Protocol {
     int READ_FILE_REQUEST = 11;
     int READ_FILE_RESPONSE = 12;
     int REPORT_FILE_CORRUPTION = 13;
+    int SEND_FILE_INFO = 14;
 }

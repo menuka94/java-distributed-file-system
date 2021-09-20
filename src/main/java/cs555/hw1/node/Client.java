@@ -14,6 +14,7 @@ import cs555.hw1.wireformats.ReadFileRequest;
 import cs555.hw1.wireformats.ReadFileResponse;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.SendFileInfo;
 import cs555.hw1.wireformats.StoreChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,6 +81,15 @@ public class Client implements Node {
         tcpServerThread.start();
     }
 
+    private void sendInitialFileInfo(String fileName, int noOfChunks, int fileSize) throws IOException {
+        SendFileInfo sendFileInfo = new SendFileInfo();
+        sendFileInfo.setFileName(fileName);
+        sendFileInfo.setNoOfChunks(noOfChunks);
+        sendFileInfo.setFileSize(fileSize);
+
+        controllerConnection.sendData(sendFileInfo.getBytes());
+    }
+
 
     /**
      * Add new file to the DFS
@@ -99,6 +109,9 @@ public class Client implements Node {
         // split file into chunks
         List<byte[]> chunks = FileUtil.splitFile(bytes, Constants.CHUNK_SIZE);
         log.info("No. of chunks: {}", chunks.size());
+
+        sendInitialFileInfo(fileName, chunks.size(), bytes.length);
+
         for (int i = 0; i < chunks.size(); i++) {
             log.info("Writing chunk: {}", i + 1);
             // contact controller and get a list of 3 chunk servers
