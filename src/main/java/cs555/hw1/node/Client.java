@@ -13,6 +13,7 @@ import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import cs555.hw1.wireformats.RetrieveChunkRequest;
+import cs555.hw1.wireformats.RetrieveChunkResponse;
 import cs555.hw1.wireformats.RetrieveFileRequest;
 import cs555.hw1.wireformats.RetrieveFileResponse;
 import cs555.hw1.wireformats.SendFileInfo;
@@ -25,6 +26,8 @@ import java.net.Socket;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Client: responsible for storing, retrieving, updating files, splitting a file into chunks,
@@ -42,6 +45,9 @@ public class Client implements Node {
 
     // store ChunkServers returned by controller (overwritten for each call)
     private ArrayList<Socket> chunkServerSockets;
+
+    // map to store chunks when retrieving a file
+    private volatile ConcurrentHashMap<String, byte[]> readingChunksMap;
 
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
@@ -229,8 +235,60 @@ public class Client implements Node {
                     e.printStackTrace();
                 }
                 break;
+            case Protocol.RETRIEVE_CHUNK_RESPONSE:
+                handleRetrieveChunkResponse(event);
+                break;
             default:
                 log.warn("Unknown event type");
+        }
+    }
+
+    private void handleRetrieveChunkResponse(Event event) {
+        RetrieveChunkResponse response = (RetrieveChunkResponse) event;
+        String chunkName = response.getChunkName();
+        byte[] chunk = response.getChunk();
+
+        if (readingChunksMap == null) {
+            log.warn("readingChunksMap has not been initialized");
+            throw new NullPointerException();
+        } else {
+            readingChunksMap.put(chunkName, chunk);
+        }
+    }
+
+    public class FileAssembler extends Thread {
+        private final Logger log = LogManager.getLogger(FileAssembler.class);
+
+        private String fileName;
+        private int noOfChunks;
+        private TreeSet<String> expectedChunkNames;
+
+        public FileAssembler(String fileName, int noOfChunks) {
+            this.fileName = fileName;
+            this.noOfChunks = noOfChunks;
+            expectedChunkNames = new TreeSet<>();
+            for (int i = 0; i < noOfChunks; i++) {
+                expectedChunkNames.add(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
+            }
+        }
+
+        @Override
+        public void run() {
+            log.info("Starting for file {} (#chunks={})", fileName, noOfChunks);
+            TreeSet<String> readingKeySet = null;
+            while (readingKeySet != expectedChunkNames) {
+                readingKeySet = new TreeSet<>(readingChunksMap.keySet());
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    log.error("Error while waiting for chunk retrieval");
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            // all chunks have been received. Proceed to assembling the file
+            log.info("Received all chunks for {}", fileName);
         }
     }
 
@@ -272,6 +330,13 @@ public class Client implements Node {
 
             tcpConnection.sendData(request.getBytes());
         }
+
+        // prepare readingChunks map for storing chunks set by ChunkServers
+        readingChunksMap = new ConcurrentHashMap<>();
+
+        // start FileAssembler thread
+        FileAssembler assembler = new FileAssembler(fileName, noOfChunks);
+        assembler.start();
     }
 
     /**

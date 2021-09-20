@@ -217,6 +217,7 @@ public class Controller implements Node {
 
         // find chunk servers that contain each chunk of the file
         String[] chunkServerHosts = new String[noOfChunks];
+        String[] chunkServerHostNames = new String[noOfChunks];
         int[] chunkServerPorts = new int[noOfChunks];
 
         for (int i = 0; i < noOfChunks; i++) {
@@ -229,7 +230,8 @@ public class Controller implements Node {
                     int chunkServerId = entry.getKey();
                     Socket socket = chunkServerSocketMap.get(chunkServerId);
                     chunkServerHosts[i] = socket.getInetAddress().getHostAddress();
-                    chunkServerPorts[i] = socket.getPort();
+                    chunkServerHostNames[i] = socket.getInetAddress().getHostName();
+                    chunkServerPorts[i] = chunkServerListeningPortMap.get(chunkServerId);
                 }
             }
         }
@@ -247,6 +249,7 @@ public class Controller implements Node {
         retrieveFileResponse.setNoOfChunks(noOfChunks);
         retrieveFileResponse.setFileSize(fileSize);
         retrieveFileResponse.setChunkServerHosts(chunkServerHosts);
+        retrieveFileResponse.setChunkServerHostNames(chunkServerHostNames);
         retrieveFileResponse.setChunkServerPorts(chunkServerPorts);
 
         try {

@@ -184,6 +184,9 @@ public class ChunkServer implements Node {
         } else {
             log.warn("{} not found", chunkName);
         }
+
+        // send requested chunk
+
     }
 
     private synchronized void handleStoreChunk(Event event) throws IOException {

@@ -97,6 +97,7 @@ public class RetrieveFileResponse extends Event {
                 dout.write(host.getBytes());
             }
 
+            // write chunkServerHostNames
             for (String hostName : chunkServerHostNames) {
                 dout.writeInt(hostName.getBytes().length);
                 dout.write(hostName.getBytes());
