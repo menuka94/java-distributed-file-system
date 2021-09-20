@@ -276,7 +276,7 @@ public class Client implements Node {
         public void run() {
             log.info("Starting for file {} (#chunks={})", fileName, noOfChunks);
             TreeSet<String> readingKeySet = null;
-            while (readingKeySet != expectedChunkNames) {
+            while (!expectedChunkNames.equals(readingKeySet)) {
                 readingKeySet = new TreeSet<>(readingChunksMap.keySet());
                 try {
                     Thread.sleep(10);

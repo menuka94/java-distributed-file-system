@@ -14,6 +14,7 @@ import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.RetrieveChunkRequest;
+import cs555.hw1.wireformats.RetrieveChunkResponse;
 import cs555.hw1.wireformats.SendMajorHeartbeat;
 import cs555.hw1.wireformats.SendMinorHeartbeat;
 import cs555.hw1.wireformats.StoreChunk;
@@ -185,8 +186,28 @@ public class ChunkServer implements Node {
             log.warn("{} not found", chunkName);
         }
 
-        // send requested chunk
+        // send requested chunk to client
+        try {
+            byte[] chunk = FileUtil.readFileAsBytes(Constants.CHUNK_DIR + File.separator + chunkName);
+            RetrieveChunkResponse response = new RetrieveChunkResponse();
+            response.setChunkName(chunkName);
+            response.setChunk(chunk);
 
+            Socket clientSocket = request.getSocket();
+            TCPConnection clientConnection;
+            if (tcpConnectionsCache.containsConnection(clientSocket)) {
+                clientConnection = tcpConnectionsCache.getConnection(clientSocket);
+            } else {
+                clientConnection = new TCPConnection(clientSocket, this);
+            }
+
+            clientConnection.sendData(response.getBytes());
+            log.info("Sending {} to client", chunkName);
+        } catch (IOException e) {
+            log.error("Error reading {}", chunkName);
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
     }
 
     private synchronized void handleStoreChunk(Event event) throws IOException {

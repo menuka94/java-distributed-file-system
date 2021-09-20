@@ -9,6 +9,7 @@ build:
 
 controller:
 	# On arkansas.cs.colostate.edu
+	./delete-chunks.sh
 	cd $(CLASSES_DIR) && java -cp $(JAR_FILE) cs555.hw1.node.Controller 9000
 
 controller-debug:

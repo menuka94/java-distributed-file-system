@@ -39,6 +39,7 @@ public class RetrieveChunkResponse extends Event {
 
         // read chunk (data)
         int chunkLength = din.readInt();
+        chunk = new byte[chunkLength];
         din.readFully(chunk, 0, chunkLength);
 
         baInputStream.close();
@@ -58,7 +59,7 @@ public class RetrieveChunkResponse extends Event {
             dout.writeInt(chunkName.getBytes().length);
             dout.write(chunkName.getBytes());
 
-            // write chunk
+            // write chunk (data)
             dout.writeInt(chunk.length);
             dout.write(chunk);
 
@@ -73,7 +74,7 @@ public class RetrieveChunkResponse extends Event {
 
     @Override
     public int getType() {
-        return Protocol.RETRIEVE_FILE_RESPONSE;
+        return Protocol.RETRIEVE_CHUNK_RESPONSE;
     }
 
     @Override

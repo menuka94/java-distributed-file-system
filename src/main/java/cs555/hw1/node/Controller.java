@@ -147,7 +147,7 @@ public class Controller implements Node {
     @Override
     public void onEvent(Event event) {
         int type = event.getType();
-        log.info("Event type: {}", type);
+        log.debug("Event type: {}", type);
         switch (type) {
             case Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER:
                 sendChunkServersToClient(event);
@@ -176,7 +176,7 @@ public class Controller implements Node {
                 handleSendFileInfo(event);
                 break;
             default:
-                log.warn("Unknown event type");
+                log.warn("Unknown event type: {}", type);
         }
     }
 
