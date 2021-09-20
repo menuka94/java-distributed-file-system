@@ -69,6 +69,32 @@ public class ChunkServer implements Node {
 
         Timer majorTimer = new Timer();
         majorTimer.schedule(new MajorHeartbeat(), 0, Constants.ChunkServer.MAJOR_HEARTBEAT_INTERVAL);
+        initFilesFromDisk();
+    }
+
+    /**
+     * Read stored chunks upon start up
+     */
+    private void initFilesFromDisk() {
+        log.info("Reading files from disk");
+        File dir = new File(Constants.CHUNK_DIR);
+        String[] files = dir.list();
+        for (String f : files) {
+            if (f.contains(Constants.ChunkServer.EXT_DATA_CHUNK)) {
+                chunks.add(f);
+
+                // populate filesMap
+                /*
+                String fileName = FileUtil.getFileNameFromChunkName(f);
+                if (filesMap.containsKey(fileName)) {
+                    StoredFile storedFile = filesMap.get(fileName);
+                    ArrayList<Chunk> chunks = storedFile.getChunks();
+                } else {
+
+                }
+                 */
+            }
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -141,6 +167,7 @@ public class ChunkServer implements Node {
     /**
      * Check if the chunk requested by client is stored in ChunkServer's disk.
      * If it exists, read and send the chunk data
+     *
      * @param event
      */
     private synchronized void handleRetrieveChunkRequest(Event event) {

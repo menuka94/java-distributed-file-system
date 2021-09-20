@@ -20,6 +20,11 @@ public class FileUtil {
         return Files.readAllBytes(Paths.get(filePath));
     }
 
+    public static String getFileNameFromChunkName(String chunkName) {
+        int i = chunkName.indexOf(Constants.ChunkServer.EXT_DATA_CHUNK);
+        return chunkName.substring(0, i - 1);
+    }
+
     public static List<byte[]> splitFile(byte[] bytes, int size) {
         List<byte[]> chunks = new ArrayList<>();
         for (int i = 0; i < bytes.length; i++) {

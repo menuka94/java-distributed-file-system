@@ -53,7 +53,7 @@ public class RetrieveChunkRequest extends Event {
             dout.writeInt(chunkName.getBytes().length);
             dout.write(chunkName.getBytes());
 
-            dout.flush();;
+            dout.flush();
             marshalledBytes = baOutputStream.toByteArray();
         } catch (IOException e) {
             log.error(e.getLocalizedMessage());
