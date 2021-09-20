@@ -10,11 +10,11 @@ import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
-import cs555.hw1.wireformats.ReadFileRequest;
-import cs555.hw1.wireformats.ReadFileResponse;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import cs555.hw1.wireformats.RetrieveChunkRequest;
+import cs555.hw1.wireformats.RetrieveFileRequest;
+import cs555.hw1.wireformats.RetrieveFileResponse;
 import cs555.hw1.wireformats.SendFileInfo;
 import cs555.hw1.wireformats.StoreChunk;
 import org.apache.logging.log4j.LogManager;
@@ -186,10 +186,10 @@ public class Client implements Node {
      * @param fileName
      */
     public synchronized void retrieveFile(String fileName) throws IOException {
-        ReadFileRequest readFileRequest = new ReadFileRequest();
-        readFileRequest.setFileName(fileName);
+        RetrieveFileRequest retrieveFileRequest = new RetrieveFileRequest();
+        retrieveFileRequest.setFileName(fileName);
 
-        controllerConnection.sendData(readFileRequest.getBytes());
+        controllerConnection.sendData(retrieveFileRequest.getBytes());
     }
 
     /**
@@ -221,9 +221,9 @@ public class Client implements Node {
             case Protocol.CONTROLLER_SENDS_CLIENT_CHUNK_SERVERS:
                 handleControllerSendsChunkServers(event);
                 break;
-            case Protocol.READ_FILE_RESPONSE:
+            case Protocol.RETRIEVE_FILE_RESPONSE:
                 try {
-                    handleReadFileResponse(event);
+                    handleRetrieveFileResponse(event);
                 } catch (IOException e) {
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
@@ -239,16 +239,16 @@ public class Client implements Node {
      *
      * @param event
      */
-    private void handleReadFileResponse(Event event) throws IOException {
-        ReadFileResponse readFileResponse = (ReadFileResponse) event;
+    private void handleRetrieveFileResponse(Event event) throws IOException {
+        RetrieveFileResponse retrieveFileResponse = (RetrieveFileResponse) event;
 
         // get information about the file
-        String fileName = readFileResponse.getFileName();
-        int fileSize = readFileResponse.getFileSize();
-        int noOfChunks = readFileResponse.getNoOfChunks();
-        String[] chunkServerHosts = readFileResponse.getChunkServerHosts();
-        String[] chunkServerHostNames = readFileResponse.getChunkServerHostNames();
-        int[] chunkServerPorts = readFileResponse.getChunkServerPorts();
+        String fileName = retrieveFileResponse.getFileName();
+        int fileSize = retrieveFileResponse.getFileSize();
+        int noOfChunks = retrieveFileResponse.getNoOfChunks();
+        String[] chunkServerHosts = retrieveFileResponse.getChunkServerHosts();
+        String[] chunkServerHostNames = retrieveFileResponse.getChunkServerHostNames();
+        int[] chunkServerPorts = retrieveFileResponse.getChunkServerPorts();
 
         log.info("ChunkServer information for file '{}': size={}, #chunks={}, hosts={}, ports={}, hostNames={}",
                 fileName, fileSize, noOfChunks, chunkServerHosts, chunkServerPorts, chunkServerHostNames);

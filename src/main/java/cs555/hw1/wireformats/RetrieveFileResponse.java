@@ -13,8 +13,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ReadFileResponse extends Event {
-    private static final Logger log = LogManager.getLogger(ReadFileResponse.class);
+public class RetrieveFileResponse extends Event {
+    private static final Logger log = LogManager.getLogger(RetrieveFileResponse.class);
 
     private Socket socket;
     private String fileName;
@@ -24,11 +24,11 @@ public class ReadFileResponse extends Event {
     private String[] chunkServerHostNames;
     private int[] chunkServerPorts;
 
-    public ReadFileResponse() {
+    public RetrieveFileResponse() {
 
     }
 
-    public ReadFileResponse(byte[] marshalledBytes) throws IOException {
+    public RetrieveFileResponse(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
@@ -118,7 +118,7 @@ public class ReadFileResponse extends Event {
 
     @Override
     public int getType() {
-        return Protocol.READ_FILE_RESPONSE;
+        return Protocol.RETRIEVE_FILE_RESPONSE;
     }
 
     @Override

@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class RetrieveChunkResponse extends Event {
-    private static final Logger log = LogManager.getLogger(ReadFileResponse.class);
+    private static final Logger log = LogManager.getLogger(RetrieveFileResponse.class);
 
     private Socket socket;
     private String chunkName;
@@ -73,7 +73,7 @@ public class RetrieveChunkResponse extends Event {
 
     @Override
     public int getType() {
-        return Protocol.READ_FILE_RESPONSE;
+        return Protocol.RETRIEVE_FILE_RESPONSE;
     }
 
     @Override

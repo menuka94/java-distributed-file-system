@@ -11,12 +11,12 @@ import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.ProtocolLookup;
-import cs555.hw1.wireformats.ReadFileRequest;
-import cs555.hw1.wireformats.ReadFileResponse;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.RetrieveFileRequest;
+import cs555.hw1.wireformats.RetrieveFileResponse;
 import cs555.hw1.wireformats.SendFileInfo;
 import cs555.hw1.wireformats.SendMajorHeartbeat;
 import org.apache.logging.log4j.LogManager;
@@ -169,8 +169,8 @@ public class Controller implements Node {
             case Protocol.SEND_MINOR_HEARTBEAT:
                 handleMinorHeartbeat(event);
                 break;
-            case Protocol.READ_FILE_REQUEST:
-                handleReadFileRequest(event);
+            case Protocol.RETRIEVE_FILE_REQUEST:
+                handleRetrieveFileRequest(event);
                 break;
             case Protocol.SEND_FILE_INFO:
                 handleSendFileInfo(event);
@@ -193,9 +193,9 @@ public class Controller implements Node {
     /**
      * Send ChunkServers (host, port) to client for each of the chunks for the file requested
      */
-    private void handleReadFileRequest(Event event) {
-        ReadFileRequest readFileRequest = (ReadFileRequest) event;
-        String fileName = readFileRequest.getFileName();
+    private void handleRetrieveFileRequest(Event event) {
+        RetrieveFileRequest retrieveFileRequest = (RetrieveFileRequest) event;
+        String fileName = retrieveFileRequest.getFileName();
 
         log.info("readFile: {}", fileName);
 
@@ -242,15 +242,15 @@ public class Controller implements Node {
         }
 
         // send response to client
-        ReadFileResponse readFileResponse = new ReadFileResponse();
-        readFileResponse.setFileName(fileName);
-        readFileResponse.setNoOfChunks(noOfChunks);
-        readFileResponse.setFileSize(fileSize);
-        readFileResponse.setChunkServerHosts(chunkServerHosts);
-        readFileResponse.setChunkServerPorts(chunkServerPorts);
+        RetrieveFileResponse retrieveFileResponse = new RetrieveFileResponse();
+        retrieveFileResponse.setFileName(fileName);
+        retrieveFileResponse.setNoOfChunks(noOfChunks);
+        retrieveFileResponse.setFileSize(fileSize);
+        retrieveFileResponse.setChunkServerHosts(chunkServerHosts);
+        retrieveFileResponse.setChunkServerPorts(chunkServerPorts);
 
         try {
-            clientConnection.sendData(readFileResponse.getBytes());
+            clientConnection.sendData(retrieveFileResponse.getBytes());
         } catch (IOException e) {
             log.error(e.getLocalizedMessage());
             e.printStackTrace();

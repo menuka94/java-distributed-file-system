@@ -79,21 +79,25 @@ public class ChunkServer implements Node {
         log.info("Reading files from disk");
         File dir = new File(Constants.CHUNK_DIR);
         String[] files = dir.list();
-        for (String f : files) {
-            if (f.contains(Constants.ChunkServer.EXT_DATA_CHUNK)) {
-                chunks.add(f);
+        if (files != null) {
+            for (String f : files) {
+                if (f.contains(Constants.ChunkServer.EXT_DATA_CHUNK)) {
+                    chunks.add(f);
 
-                // populate filesMap
-                /*
-                String fileName = FileUtil.getFileNameFromChunkName(f);
-                if (filesMap.containsKey(fileName)) {
-                    StoredFile storedFile = filesMap.get(fileName);
-                    ArrayList<Chunk> chunks = storedFile.getChunks();
-                } else {
+                    // populate filesMap
+                    /*
+                    String fileName = FileUtil.getFileNameFromChunkName(f);
+                    if (filesMap.containsKey(fileName)) {
+                        StoredFile storedFile = filesMap.get(fileName);
+                        ArrayList<Chunk> chunks = storedFile.getChunks();
+                    } else {
 
+                    }
+                     */
                 }
-                 */
             }
+        } else {
+            log.warn("{} is empty", dir.getPath());
         }
     }
 

@@ -13,17 +13,17 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ReadFileRequest extends Event {
-    private static final Logger log = LogManager.getLogger(ReadFileRequest.class);
+public class RetrieveFileRequest extends Event {
+    private static final Logger log = LogManager.getLogger(RetrieveFileRequest.class);
 
     private Socket socket;
     private String fileName;
 
-    public ReadFileRequest() {
+    public RetrieveFileRequest() {
 
     }
 
-    public ReadFileRequest(byte[] marshalledBytes) throws IOException {
+    public RetrieveFileRequest(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
@@ -73,7 +73,7 @@ public class ReadFileRequest extends Event {
 
     @Override
     public int getType() {
-        return Protocol.READ_FILE_REQUEST;
+        return Protocol.RETRIEVE_FILE_REQUEST;
     }
 
     @Override

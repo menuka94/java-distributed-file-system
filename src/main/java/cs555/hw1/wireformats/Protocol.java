@@ -10,8 +10,8 @@ public interface Protocol {
     int STORE_CHUNK = 8;
     int SEND_MAJOR_HEARTBEAT = 9;
     int SEND_MINOR_HEARTBEAT = 10;
-    int READ_FILE_REQUEST = 11;
-    int READ_FILE_RESPONSE = 12;
+    int RETRIEVE_FILE_REQUEST = 11;
+    int RETRIEVE_FILE_RESPONSE = 12;
     int REPORT_FILE_CORRUPTION = 13;
     int SEND_FILE_INFO = 14;
     int RETRIEVE_CHUNK_REQUEST = 15;
