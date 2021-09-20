@@ -21,9 +21,9 @@ public class ProtocolLookup {
                 return "SEND_MAJOR_HEARTBEAT";
             case Protocol.SEND_MINOR_HEARTBEAT:
                 return "SEND_MINOR_HEARTBEAT";
-            case Protocol.READ_FILE_REQUEST:
+            case Protocol.RETRIEVE_FILE_REQUEST:
                 return "READ_FILE_REQUEST";
-            case Protocol.READ_FILE_RESPONSE:
+            case Protocol.RETRIEVE_FILE_RESPONSE:
                 return "READ_FILE_RESPONSE";
             case Protocol.SEND_FILE_INFO:
                 return "SEND_FILE_INFO";

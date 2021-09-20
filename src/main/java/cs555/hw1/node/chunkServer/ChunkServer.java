@@ -14,6 +14,7 @@ import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReportChunkServerRegistration;
 import cs555.hw1.wireformats.RetrieveChunkRequest;
+import cs555.hw1.wireformats.RetrieveChunkResponse;
 import cs555.hw1.wireformats.SendMajorHeartbeat;
 import cs555.hw1.wireformats.SendMinorHeartbeat;
 import cs555.hw1.wireformats.StoreChunk;
@@ -79,21 +80,25 @@ public class ChunkServer implements Node {
         log.info("Reading files from disk");
         File dir = new File(Constants.CHUNK_DIR);
         String[] files = dir.list();
-        for (String f : files) {
-            if (f.contains(Constants.ChunkServer.EXT_DATA_CHUNK)) {
-                chunks.add(f);
+        if (files != null) {
+            for (String f : files) {
+                if (f.contains(Constants.ChunkServer.EXT_DATA_CHUNK)) {
+                    chunks.add(f);
 
-                // populate filesMap
-                /*
-                String fileName = FileUtil.getFileNameFromChunkName(f);
-                if (filesMap.containsKey(fileName)) {
-                    StoredFile storedFile = filesMap.get(fileName);
-                    ArrayList<Chunk> chunks = storedFile.getChunks();
-                } else {
+                    // populate filesMap
+                    /*
+                    String fileName = FileUtil.getFileNameFromChunkName(f);
+                    if (filesMap.containsKey(fileName)) {
+                        StoredFile storedFile = filesMap.get(fileName);
+                        ArrayList<Chunk> chunks = storedFile.getChunks();
+                    } else {
 
+                    }
+                     */
                 }
-                 */
             }
+        } else {
+            log.warn("No files found in {}", dir.getPath());
         }
     }
 
@@ -173,14 +178,40 @@ public class ChunkServer implements Node {
     private synchronized void handleRetrieveChunkRequest(Event event) {
         RetrieveChunkRequest request = (RetrieveChunkRequest) event;
         String chunkName = request.getChunkName();
+        Socket clientSocket = request.getSocket();
         log.info("Searching for Chunk: {}", chunkName);
         boolean chunkFound = chunks.contains(chunkName);
         if (chunkFound) {
             log.info("{} found", chunkName);
         } else {
             log.warn("{} not found", chunkName);
+            return;
+        }
+
+        // read chunk from disk
+        try {
+            byte[] chunk = FileUtil.readFileAsBytes(Constants.CHUNK_DIR + File.separator + chunkName);
+
+            RetrieveChunkResponse response = new RetrieveChunkResponse();
+            response.setChunkName(chunkName);
+            response.setChunk(chunk);
+
+            TCPConnection clientConnection;
+            if (tcpConnectionsCache.containsConnection(clientSocket)) {
+                clientConnection = tcpConnectionsCache.getConnection(clientSocket);
+            } else {
+                clientConnection = new TCPConnection(clientSocket, this);
+            }
+
+            clientConnection.sendData(response.getBytes());
+            log.info("Sending {} to client", chunkName);
+        } catch (IOException e) {
+            log.error("Error reading chunk: {}", chunkName);
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
         }
     }
+
 
     private synchronized void handleStoreChunk(Event event) throws IOException {
         log.debug("handleStoreChunk(event)");

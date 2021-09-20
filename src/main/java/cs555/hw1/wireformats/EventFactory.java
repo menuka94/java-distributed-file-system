@@ -60,14 +60,14 @@ public class EventFactory {
                 SendMajorHeartbeat majorHeartbeat = new SendMajorHeartbeat(data);
                 majorHeartbeat.setSocket(socket);
                 return majorHeartbeat;
-            case Protocol.READ_FILE_REQUEST:
-                ReadFileRequest readFileRequest = new ReadFileRequest(data);
-                readFileRequest.setSocket(socket);
-                return readFileRequest;
-            case Protocol.READ_FILE_RESPONSE:
-                ReadFileResponse readFileResponse = new ReadFileResponse(data);
-                readFileResponse.setSocket(socket);
-                return readFileResponse;
+            case Protocol.RETRIEVE_FILE_REQUEST:
+                RetrieveFileRequest retrieveFileRequest = new RetrieveFileRequest(data);
+                retrieveFileRequest.setSocket(socket);
+                return retrieveFileRequest;
+            case Protocol.RETRIEVE_FILE_RESPONSE:
+                RetrieveFileResponse retrieveFileResponse = new RetrieveFileResponse(data);
+                retrieveFileResponse.setSocket(socket);
+                return retrieveFileResponse;
             case Protocol.SEND_FILE_INFO:
                 SendFileInfo sendFileInfo = new SendFileInfo(data);
                 sendFileInfo.setSocket(socket);

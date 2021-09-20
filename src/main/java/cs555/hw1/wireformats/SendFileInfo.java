@@ -15,7 +15,7 @@ import java.net.Socket;
 
 /**
  * Client sends file info to the controller when asked to add a new file
- * (at the same time
+ * (at the same time the client asks for information about 3 chunk servers to store a chunk)
  */
 public class SendFileInfo extends Event {
     private static final Logger log = LogManager.getLogger(SendFileInfo.class);

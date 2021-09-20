@@ -16,7 +16,7 @@ public class FileUtil {
     private static final Logger log = LogManager.getLogger(FileUtil.class);
 
     public static byte[] readFileAsBytes(String filePath) throws IOException {
-        log.info("readFileAsBytes()");
+        log.debug("readFileAsBytes()");
         return Files.readAllBytes(Paths.get(filePath));
     }
 

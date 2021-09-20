@@ -10,8 +10,9 @@ import cs555.hw1.wireformats.ClientRequestsChunkServersFromController;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.Protocol;
-import cs555.hw1.wireformats.ReadFileRequest;
-import cs555.hw1.wireformats.ReadFileResponse;
+import cs555.hw1.wireformats.RetrieveChunkResponse;
+import cs555.hw1.wireformats.RetrieveFileRequest;
+import cs555.hw1.wireformats.RetrieveFileResponse;
 import cs555.hw1.wireformats.RegisterClient;
 import cs555.hw1.wireformats.ReportClientRegistration;
 import cs555.hw1.wireformats.RetrieveChunkRequest;
@@ -25,6 +26,8 @@ import java.net.Socket;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Client: responsible for storing, retrieving, updating files, splitting a file into chunks,
@@ -42,6 +45,9 @@ public class Client implements Node {
 
     // store ChunkServers returned by controller (overwritten for each call)
     private ArrayList<Socket> chunkServerSockets;
+
+    // map to store chunks when retrieving a file
+    private volatile  ConcurrentHashMap<String, byte[]> readingChunks;
 
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
@@ -82,6 +88,10 @@ public class Client implements Node {
         tcpServerThread.start();
     }
 
+    /**
+     * Send fileName, noOfChunks, fileSize to controller when requesting to store a new file
+     * @throws IOException
+     */
     private void sendInitialFileInfo(String fileName, int noOfChunks, int fileSize) throws IOException {
         SendFileInfo sendFileInfo = new SendFileInfo();
         sendFileInfo.setFileName(fileName);
@@ -94,7 +104,6 @@ public class Client implements Node {
 
     /**
      * Add new file to the DFS
-     *
      * @param filePath
      * @throws IOException
      */
@@ -182,11 +191,10 @@ public class Client implements Node {
 
     /**
      * Retrieve stored file from the DFS
-     *
      * @param fileName
      */
     public synchronized void retrieveFile(String fileName) throws IOException {
-        ReadFileRequest readFileRequest = new ReadFileRequest();
+        RetrieveFileRequest readFileRequest = new RetrieveFileRequest();
         readFileRequest.setFileName(fileName);
 
         controllerConnection.sendData(readFileRequest.getBytes());
@@ -221,16 +229,67 @@ public class Client implements Node {
             case Protocol.CONTROLLER_SENDS_CLIENT_CHUNK_SERVERS:
                 handleControllerSendsChunkServers(event);
                 break;
-            case Protocol.READ_FILE_RESPONSE:
+            case Protocol.RETRIEVE_FILE_RESPONSE:
                 try {
-                    handleReadFileResponse(event);
+                    handleRetrieveFileResponse(event);
                 } catch (IOException e) {
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
                 }
                 break;
+            case Protocol.RETRIEVE_CHUNK_RESPONSE:
+                handleRetrieveChunkResponse(event);
+                break;
             default:
                 log.warn("Unknown event type");
+        }
+    }
+
+    /**
+     * Process response sent by client containing the requested chunk data
+     * @param event
+     */
+    private synchronized void handleRetrieveChunkResponse(Event event) {
+        RetrieveChunkResponse retrieveChunkResponse = (RetrieveChunkResponse) event;
+        String chunkName = retrieveChunkResponse.getChunkName();
+        byte[] chunk = retrieveChunkResponse.getChunk();
+
+        readingChunks.put(chunkName, chunk);
+    }
+
+    public class FileAssembler extends Thread {
+        private final Logger log = LogManager.getLogger(FileAssembler.class);
+        private String fileName;
+        private int noOfChunks;
+        private byte[][] chunks;
+        private TreeSet<String> expectedChunkNames;
+
+        public FileAssembler(String fileName, int noOfChunks) {
+            this.fileName = fileName;
+            this.noOfChunks = noOfChunks;
+            chunks = new byte[noOfChunks][];
+            expectedChunkNames = new TreeSet<>();
+            for (int i = 0; i < noOfChunks; i++) {
+                expectedChunkNames.add(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
+            }
+        }
+
+        @Override
+        public void run() {
+            TreeSet<String> readingKeySet = null;
+            while (readingKeySet != expectedChunkNames) {
+                readingKeySet =  new TreeSet<>(readingChunks.keySet());
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    log.error("Error waiting for the chunk retrieval");
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            // all chunks have been received. Proceed to assembling the file.
+            log.info("Received all chunks for {}", fileName);
         }
     }
 
@@ -239,16 +298,16 @@ public class Client implements Node {
      *
      * @param event
      */
-    private void handleReadFileResponse(Event event) throws IOException {
-        ReadFileResponse readFileResponse = (ReadFileResponse) event;
+    private synchronized void handleRetrieveFileResponse(Event event) throws IOException {
+        RetrieveFileResponse retrieveFileResponse = (RetrieveFileResponse) event;
 
         // get information about the file
-        String fileName = readFileResponse.getFileName();
-        int fileSize = readFileResponse.getFileSize();
-        int noOfChunks = readFileResponse.getNoOfChunks();
-        String[] chunkServerHosts = readFileResponse.getChunkServerHosts();
-        String[] chunkServerHostNames = readFileResponse.getChunkServerHostNames();
-        int[] chunkServerPorts = readFileResponse.getChunkServerPorts();
+        String fileName = retrieveFileResponse.getFileName();
+        int fileSize = retrieveFileResponse.getFileSize();
+        int noOfChunks = retrieveFileResponse.getNoOfChunks();
+        String[] chunkServerHosts = retrieveFileResponse.getChunkServerHosts();
+        String[] chunkServerHostNames = retrieveFileResponse.getChunkServerHostNames();
+        int[] chunkServerPorts = retrieveFileResponse.getChunkServerPorts();
 
         log.info("ChunkServer information for file '{}': size={}, #chunks={}, hosts={}, ports={}, hostNames={}",
                 fileName, fileSize, noOfChunks, chunkServerHosts, chunkServerPorts, chunkServerHostNames);
@@ -268,10 +327,17 @@ public class Client implements Node {
             }
 
             RetrieveChunkRequest request = new RetrieveChunkRequest();
-            request.setChunkName(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
+            String chunkName = fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
+            log.info("Requesting {} from {}", chunkName, socket.getInetAddress().getHostName());
+            request.setChunkName(chunkName);
 
             tcpConnection.sendData(request.getBytes());
         }
+
+        // prepare readingChunks map for storing chunks sent by ChunkServers
+        readingChunks = new ConcurrentHashMap<>();
+        FileAssembler assembler = new FileAssembler(fileName, noOfChunks);
+        assembler.start();
     }
 
     /**
@@ -317,7 +383,7 @@ public class Client implements Node {
      * @param event
      * @return
      */
-    private void handleControllerSendsChunkServers(Event event) {
+    private synchronized void handleControllerSendsChunkServers(Event event) {
         log.debug("handleControllerSendsChunkServers(event)");
         ControllerSendsClientChunkServers sendsClientChunkServersEvent =
                 (ControllerSendsClientChunkServers) event;
