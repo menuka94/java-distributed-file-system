@@ -19,6 +19,7 @@ public class RetrieveChunkResponse extends Event {
     private Socket socket;
     private String chunkName;
     private byte[] chunk;
+    private String chunkHash;
 
     public RetrieveChunkResponse() {
 
@@ -42,6 +43,12 @@ public class RetrieveChunkResponse extends Event {
         chunk = new byte[chunkLength];
         din.readFully(chunk, 0, chunkLength);
 
+        // read chunkHash
+        int chunkHashLength = din.readInt();
+        byte[] chunkHashBytes = new byte[chunkHashLength];
+        din.readFully(chunkHashBytes, 0, chunkHashLength);
+        chunkHash = new String(chunkHashBytes);
+
         baInputStream.close();
         din.close();
     }
@@ -62,6 +69,10 @@ public class RetrieveChunkResponse extends Event {
             // write chunk (data)
             dout.writeInt(chunk.length);
             dout.write(chunk);
+
+            // write chunkHash
+            dout.writeInt(chunkHash.getBytes().length);
+            dout.write(chunkHash.getBytes());
 
             dout.flush();
             marshalledBytes = baOutputStream.toByteArray();
@@ -100,5 +111,13 @@ public class RetrieveChunkResponse extends Event {
 
     public void setChunkName(String chunkName) {
         this.chunkName = chunkName;
+    }
+
+    public String getChunkHash() {
+        return chunkHash;
+    }
+
+    public void setChunkHash(String chunkHash) {
+        this.chunkHash = chunkHash;
     }
 }

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +51,7 @@ public class ChunkServer implements Node {
 
     private volatile HashMap<String, StoredFile> filesMap;
     private volatile ConcurrentHashMap<String, ArrayList<String>> sliceHashesMap;
+    private volatile ConcurrentHashMap<String, String> chunkHashesMap;
     private volatile ArrayList<String> chunks;
     private String hostName;
 
@@ -59,6 +61,7 @@ public class ChunkServer implements Node {
         filesMap = new HashMap<>();
         chunks = new ArrayList<>();
         sliceHashesMap = new ConcurrentHashMap<>();
+        chunkHashesMap = new ConcurrentHashMap<>();
         hostName = controllerSocket.getLocalAddress().getHostName();
 
         tcpConnectionsCache = new TCPConnectionsCache();
@@ -191,9 +194,11 @@ public class ChunkServer implements Node {
 
         // send requested chunk to client
         try {
-            byte[] chunk = FileUtil.readFileAsBytes(Constants.CHUNK_DIR + File.separator + chunkName);
+            byte[] chunkOnDisk = FileUtil.readFileAsBytes(Constants.CHUNK_DIR + File.separator + chunkName);
 
-            ArrayList<String> sliceHashes = FileUtil.getSliceHashesFromChunk(chunk);
+            // verify the integrity of each slice of the chunks
+            // (verify slices on disks against the stored ones)
+            ArrayList<String> sliceHashes = FileUtil.getSliceHashesFromChunk(chunkOnDisk);
             ArrayList<String> storedSliceHashes = sliceHashesMap.get(chunkName);
             assert sliceHashes.size() == storedSliceHashes.size();
             boolean corrupted = false;
@@ -205,12 +210,22 @@ public class ChunkServer implements Node {
             }
 
             if (!corrupted) {
+                log.info("{}'s integrity confirmed through slices!", chunkName);
+            }
+
+            // verity hash of the entire chunk
+            String readHash = FileUtil.hash(chunkOnDisk);
+            String expectedHash = chunkHashesMap.get(chunkName);
+            if (!expectedHash.equals(readHash)) {
+                log.warn("Chunk hashes do not match for {}", chunkName);
+            } else {
                 log.info("{}'s integrity confirmed!", chunkName);
             }
 
             RetrieveChunkResponse response = new RetrieveChunkResponse();
             response.setChunkName(chunkName);
-            response.setChunk(chunk);
+            response.setChunk(chunkOnDisk);
+            response.setChunkHash(readHash);
 
             Socket clientSocket = request.getSocket();
             TCPConnection clientConnection;
@@ -375,6 +390,9 @@ public class ChunkServer implements Node {
         }
         chunkObj.setSliceHashes(hashes);
         log.info("Slice Hashes computed for Chunk({}, sequence-{}, version-{})", fileName, sequenceNumber, version);
+
+        // add entry chunkHashesMap
+        chunkHashesMap.put(chunkObj.getName(), Objects.requireNonNull(FileUtil.hash(chunk)));
 
         // add entry to sliceHashesMap
         ArrayList<String> sliceHashes = FileUtil.getSliceHashesFromChunk(chunk);

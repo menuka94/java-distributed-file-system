@@ -251,6 +251,12 @@ public class Client implements Node {
         RetrieveChunkResponse response = (RetrieveChunkResponse) event;
         String chunkName = response.getChunkName();
         byte[] chunk = response.getChunk();
+        String chunkHash = response.getChunkHash();
+        if (!FileUtil.hash(chunk).equals(chunkHash)) {
+            log.warn("{}'s hashes do not match!", chunkName);
+        } else {
+            log.info("{}'s integrity confirmed!", chunkName);
+        }
 
         if (readingChunksMap == null) {
             log.warn("readingChunksMap has not been initialized");
