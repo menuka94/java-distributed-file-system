@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -110,6 +111,11 @@ public class Client implements Node {
      */
     public synchronized void addFile(String filePath) throws IOException {
         log.info("addFile: (file = {})", filePath);
+
+        if (!Files.exists(Path.of(filePath))) {
+            log.error("File {} not found", filePath);
+            return;
+        }
 
         String fileName = Paths.get(filePath).getFileName().toString();
         log.info("fileName: {}", fileName);
