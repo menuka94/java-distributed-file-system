@@ -16,13 +16,22 @@ public class FileUtil {
     private static final Logger log = LogManager.getLogger(FileUtil.class);
 
     public static byte[] readFileAsBytes(String filePath) throws IOException {
-        log.info("readFileAsBytes()");
         return Files.readAllBytes(Paths.get(filePath));
+    }
+
+    public static ArrayList<String> getSliceHashesFromChunk(byte[] chunk) {
+        List<byte[]> slices = splitFile(chunk, Constants.SLICE_SIZE);
+        ArrayList<String> hashes = new ArrayList<>();
+        for (byte[] slice : slices) {
+            hashes.add(hash(slice));
+        }
+
+        return hashes;
     }
 
     public static byte[] concat(byte[]... arrays) {
         int length = 0;
-        for (byte[] array: arrays) {
+        for (byte[] array : arrays) {
             length += array.length;
         }
         byte[] result = new byte[length];

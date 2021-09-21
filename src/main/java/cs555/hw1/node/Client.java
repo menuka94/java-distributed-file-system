@@ -307,10 +307,10 @@ public class Client implements Node {
                     allChunks[i] = readingChunksMap.get(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
                 }
                 fos.write(FileUtil.concat(allChunks));
-//                for (byte[] aByte : bytes) {
-//                    log.info("length of chunk: {}", aByte.length);
-//                    fos.write(aByte);
-//                }
+                //                for (byte[] aByte : bytes) {
+                //                    log.info("length of chunk: {}", aByte.length);
+                //                    fos.write(aByte);
+                //                }
 
                 log.info("Successfully assembled {}!", fileName);
             } catch (FileNotFoundException e) {

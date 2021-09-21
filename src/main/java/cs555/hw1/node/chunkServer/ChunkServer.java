@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Each chunk server will maintain a list of the files that it manages.
@@ -48,6 +49,7 @@ public class ChunkServer implements Node {
     private InteractiveCommandParser commandParser;
 
     private volatile HashMap<String, StoredFile> filesMap;
+    private volatile ConcurrentHashMap<String, ArrayList<String>> sliceHashesMap;
     private volatile ArrayList<String> chunks;
     private String hostName;
 
@@ -56,6 +58,7 @@ public class ChunkServer implements Node {
         controllerConnection = new TCPConnection(controllerSocket, this);
         filesMap = new HashMap<>();
         chunks = new ArrayList<>();
+        sliceHashesMap = new ConcurrentHashMap<>();
         hostName = controllerSocket.getLocalAddress().getHostName();
 
         tcpConnectionsCache = new TCPConnectionsCache();
@@ -189,6 +192,22 @@ public class ChunkServer implements Node {
         // send requested chunk to client
         try {
             byte[] chunk = FileUtil.readFileAsBytes(Constants.CHUNK_DIR + File.separator + chunkName);
+
+            ArrayList<String> sliceHashes = FileUtil.getSliceHashesFromChunk(chunk);
+            ArrayList<String> storedSliceHashes = sliceHashesMap.get(chunkName);
+            assert sliceHashes.size() == storedSliceHashes.size();
+            boolean corrupted = false;
+            for (int i = 0; i < sliceHashes.size(); i++) {
+                if (!sliceHashes.get(i).equals(storedSliceHashes.get(i))) {
+                    log.warn("Slice {} of {} is corrupted", (i + 1), chunkName);
+                    corrupted = true;
+                }
+            }
+
+            if (!corrupted) {
+                log.info("{}'s integrity confirmed!", chunkName);
+            }
+
             RetrieveChunkResponse response = new RetrieveChunkResponse();
             response.setChunkName(chunkName);
             response.setChunk(chunk);
@@ -356,6 +375,10 @@ public class ChunkServer implements Node {
         }
         chunkObj.setSliceHashes(hashes);
         log.info("Slice Hashes computed for Chunk({}, sequence-{}, version-{})", fileName, sequenceNumber, version);
+
+        // add entry to sliceHashesMap
+        ArrayList<String> sliceHashes = FileUtil.getSliceHashesFromChunk(chunk);
+        sliceHashesMap.put(chunkObj.getName(), sliceHashes);
 
         if (!chunks.contains(chunkObj.getName())) {
             chunks.add(chunkObj.getName());
