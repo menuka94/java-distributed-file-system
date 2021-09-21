@@ -24,7 +24,7 @@ public class EventFactory {
 
     public Event getEvent(byte[] data, Socket socket) throws IOException {
         byte b = ByteBuffer.wrap(data).get(0);
-        log.info("getEvent(): {}", ProtocolLookup.getEventLiteral(b));
+        log.debug("getEvent(): {}", ProtocolLookup.getEventLiteral(b));
         switch ((int) b) {
             case Protocol.CLIENT_REQUESTS_CHUNK_SERVERS_FROM_CONTROLLER:
                 ClientRequestsChunkServersFromController requestChunkServersEvent =

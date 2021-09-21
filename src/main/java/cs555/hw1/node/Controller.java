@@ -279,7 +279,7 @@ public class Controller implements Node {
             chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
 
-        log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={}, #chunks={})",
+        log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={})",
                 chunkServerHostname, freeSpace, noOfChunks);
     }
 
@@ -445,6 +445,7 @@ public class Controller implements Node {
      * Print information about files in the DFS
      */
     public void printFiles() {
+        System.out.println("No. of files: " + fileInfos.size());
         for (FileInfo fileInfo : fileInfos) {
             System.out.println(fileInfo.getFileName() + ": (size = " + fileInfo.getFileSize() +
                     " KB, #chunks: " + fileInfo.getNoOfChunks() + ")");

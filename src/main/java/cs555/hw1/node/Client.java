@@ -312,11 +312,19 @@ public class Client implements Node {
                 for (int i = 0; i < noOfChunks; i++) {
                     allChunks[i] = readingChunksMap.get(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
                 }
-                fos.write(FileUtil.concat(allChunks));
-                //                for (byte[] aByte : bytes) {
-                //                    log.info("length of chunk: {}", aByte.length);
-                //                    fos.write(aByte);
-                //                }
+                byte[] combinedBytes = FileUtil.concat(allChunks);
+                log.info("Length 1 of {} assembled on client: {}", fileName, combinedBytes.length);
+                fos.write(combinedBytes);
+                fos.flush();
+                fos.close();
+
+                int length2 = 0;
+                for (byte[] aByte : bytes) {
+                    length2 += aByte.length;
+                    // log.info("length of chunk: {}", aByte.length);
+                    // fos.write(aByte);
+                }
+                log.info("Length 2 of {} assembled on client: {}", fileName, length2);
 
                 log.info("Successfully assembled {}!", fileName);
             } catch (FileNotFoundException e) {
@@ -369,7 +377,7 @@ public class Client implements Node {
             tcpConnection.sendData(request.getBytes());
         }
 
-        // prepare readingChunks map for storing chunks set by ChunkServers
+        // prepare readingChunks map for storing chunks sent by ChunkServers
         readingChunksMap = new ConcurrentHashMap<>();
 
         // start FileAssembler thread
