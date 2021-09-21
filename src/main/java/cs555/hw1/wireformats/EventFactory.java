@@ -80,6 +80,14 @@ public class EventFactory {
                 RetrieveChunkResponse retrieveChunkResponse = new RetrieveChunkResponse(data);
                 retrieveChunkResponse.setSocket(socket);
                 return retrieveChunkResponse;
+            case Protocol.REPORT_CHUNK_CORRUPTION:
+                ReportChunkCorruption reportChunkCorruption = new ReportChunkCorruption(data);
+                reportChunkCorruption.setSocket(socket);
+                return reportChunkCorruption;
+            case Protocol.FIX_CORRUPT_CHUNK:
+                FixCorruptChunk fixCorruptChunk = new FixCorruptChunk(data);
+                fixCorruptChunk.setSocket(socket);
+                return fixCorruptChunk;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

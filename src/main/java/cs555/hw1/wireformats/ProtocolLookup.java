@@ -31,6 +31,10 @@ public class ProtocolLookup {
                 return "RETRIEVE_CHUNK_REQUEST";
             case Protocol.RETRIEVE_CHUNK_RESPONSE:
                 return "RETRIEVE_CHUNK_RESPONSE";
+            case Protocol.REPORT_CHUNK_CORRUPTION:
+                return "REPORT_CHUNK_CORRUPTION";
+            case Protocol.FIX_CORRUPT_CHUNK:
+                return "FIX_CORRUPT_CHUNK";
             default:
                 return "ERROR: Unknown Event: " + type;
         }

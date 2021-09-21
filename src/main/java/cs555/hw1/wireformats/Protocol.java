@@ -16,4 +16,6 @@ public interface Protocol {
     int SEND_FILE_INFO = 14;
     int RETRIEVE_CHUNK_REQUEST = 15;
     int RETRIEVE_CHUNK_RESPONSE = 16;
+    int REPORT_CHUNK_CORRUPTION = 17;
+    int FIX_CORRUPT_CHUNK = 18;
 }
