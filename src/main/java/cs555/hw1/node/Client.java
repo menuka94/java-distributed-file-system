@@ -122,18 +122,11 @@ public class Client implements Node {
 
         // read file contents
         byte[] bytes = FileUtil.readFileAsBytes(filePath);
-        log.info("[DEBUG]: Length of original file bytes: {}", bytes.length);
+        log.debug("Length of original file bytes: {}", bytes.length);
 
         // split file into chunks
-        //        List<byte[]> chunks = FileUtil.splitFile(bytes, Constants.CHUNK_SIZE);
+        // List<byte[]> chunks = FileUtil.splitFile(bytes, Constants.CHUNK_SIZE);
         List<byte[]> chunks = FileUtil.divideArray(bytes, Constants.CHUNK_SIZE);
-
-        int length = 0;
-        for (int i = 0; i < chunks.size(); i++) {
-            length += chunks.get(i).length;
-        }
-        log.info("[DEBUG]: Length of split file bytes: {}", length);
-
         log.info("No. of chunks: {}", chunks.size());
 
         sendInitialFileInfo(fileName, chunks.size(), bytes.length);
@@ -223,7 +216,7 @@ public class Client implements Node {
      * @throws IOException
      */
     private synchronized void sendChunkServerRequestToController() throws IOException {
-        log.info("sendChunkServerRequestToController()");
+        log.debug("sendChunkServerRequestToController()");
         ClientRequestsChunkServersFromController requestChunkServersEvent =
                 new ClientRequestsChunkServersFromController();
         requestChunkServersEvent.setSocket(controllerConnection.getSocket());
@@ -406,7 +399,7 @@ public class Client implements Node {
      * @throws IOException
      */
     private void sendRegistrationRequestToController() throws IOException {
-        log.info("sendRegistrationRequestToController()");
+        log.debug("sendRegistrationRequestToController()");
         RegisterClient registerClient = new RegisterClient();
         registerClient.setIpAddressLength((byte) controllerConnection.getSocket()
                 .getLocalAddress().getAddress().length);

@@ -69,7 +69,7 @@ public class FileUtil {
         List<byte[]> chunks = new ArrayList<>();
         for (int i = 0; i < bytes.length; i++) {
             byte[] chunk = new byte[Math.min(size, bytes.length - i)];
-            log.info("[DEBUG]: chunk.length: {}", chunk.length);
+            log.debug("[DEBUG]: chunk.length: {}", chunk.length);
             for (int j = 0; j < chunk.length; j++, i++) {
                 chunk[j] = bytes[i];
             }
