@@ -351,7 +351,7 @@ public class Client implements Node {
      *
      * @param event
      */
-    private void handleRetrieveFileResponse(Event event) throws IOException {
+    private synchronized void handleRetrieveFileResponse(Event event) throws IOException {
         RetrieveFileResponse retrieveFileResponse = (RetrieveFileResponse) event;
 
         // get information about the file
