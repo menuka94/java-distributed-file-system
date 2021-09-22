@@ -70,6 +70,9 @@ public class RetrieveFileResponse extends Event {
         for (int i = 0; i < noOfChunks; i++) {
             chunkServerPorts[i] = din.readInt();
         }
+
+        baInputStream.close();
+        din.close();
     }
 
     @Override

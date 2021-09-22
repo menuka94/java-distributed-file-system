@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
 
@@ -49,10 +50,26 @@ public class FileUtil {
         return chunkName.substring(0, i - 1);
     }
 
+    /**
+     * From https://stackoverflow.com/a/20113784
+     */
+    public static List<byte[]> divideArray(byte[] source, int chunksize) {
+        List<byte[]> result = new ArrayList<byte[]>();
+        int start = 0;
+        while (start < source.length) {
+            int end = Math.min(source.length, start + chunksize);
+            result.add(Arrays.copyOfRange(source, start, end));
+            start += chunksize;
+        }
+
+        return result;
+    }
+
     public static List<byte[]> splitFile(byte[] bytes, int size) {
         List<byte[]> chunks = new ArrayList<>();
         for (int i = 0; i < bytes.length; i++) {
             byte[] chunk = new byte[Math.min(size, bytes.length - i)];
+            log.debug("[DEBUG]: chunk.length: {}", chunk.length);
             for (int j = 0; j < chunk.length; j++, i++) {
                 chunk[j] = bytes[i];
             }

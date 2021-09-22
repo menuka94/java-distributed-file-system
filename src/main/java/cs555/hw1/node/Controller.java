@@ -109,13 +109,6 @@ public class Controller implements Node {
         }
     }
 
-    public ArrayList<ChunkServer> getChunkServersForNewFile() {
-        log.info("getChunkServersForNewFile");
-        ArrayList<ChunkServer> availableChunkServers = new ArrayList<>();
-
-        return availableChunkServers;
-    }
-
     public void listChunkServers() {
         ArrayList<Integer> ids = new ArrayList<>(chunkServerSocketMap.keySet());
         System.out.println("No. of Chunk Servers: " + ids.size());
