@@ -255,7 +255,7 @@ public class Client implements Node {
         }
     }
 
-    private void handleRetrieveChunkResponse(Event event) {
+    private synchronized void handleRetrieveChunkResponse(Event event) {
         RetrieveChunkResponse response = (RetrieveChunkResponse) event;
         String chunkName = response.getChunkName();
         byte[] chunk = response.getChunk();

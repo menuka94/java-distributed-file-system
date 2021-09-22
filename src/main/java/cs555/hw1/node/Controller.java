@@ -271,8 +271,8 @@ public class Controller implements Node {
         for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
             if (socket == entry.getValue()) {
                 chunkServerChunksMap.put(entry.getKey(), chunks);
+                chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
             }
-            chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
 
         log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={})",
@@ -429,15 +429,18 @@ public class Controller implements Node {
     private ArrayList<Integer> getChunkServersWithHighestFreeSpace() {
         ArrayList<Integer> ids = new ArrayList<>();
         ArrayList<Long> sortedFreeSpaces = new ArrayList<>(chunkServerFreeSpaceMap.values());
+        log.info("freeSpaces (before sorting): {}", sortedFreeSpaces);
         sortedFreeSpaces.sort(Comparator.reverseOrder());
-        List<Long> topN = sortedFreeSpaces.subList(0, Constants.REPLICATION_LEVEL);
+        log.info("freeSpaces (after sorting): {}", sortedFreeSpaces);
+        List<Long> topNFreeSpaces = sortedFreeSpaces.subList(0, Constants.REPLICATION_LEVEL);
+        log.info("topNFreeSpaces: {}", topNFreeSpaces);
         for (Map.Entry<Integer, Long> entry : chunkServerFreeSpaceMap.entrySet()) {
-            if (topN.contains(entry.getValue())) {
+            if (topNFreeSpaces.contains(entry.getValue())) {
                 ids.add(entry.getKey());
             }
         }
 
-        assert ids.size() == topN.size();
+        assert ids.size() == topNFreeSpaces.size();
 
         return ids;
     }
