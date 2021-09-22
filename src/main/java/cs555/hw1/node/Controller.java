@@ -7,18 +7,7 @@ import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
 import cs555.hw1.util.controller.FileInfo;
-import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
-import cs555.hw1.wireformats.Event;
-import cs555.hw1.wireformats.Protocol;
-import cs555.hw1.wireformats.ProtocolLookup;
-import cs555.hw1.wireformats.RegisterChunkServer;
-import cs555.hw1.wireformats.RegisterClient;
-import cs555.hw1.wireformats.ReportChunkServerRegistration;
-import cs555.hw1.wireformats.ReportClientRegistration;
-import cs555.hw1.wireformats.RetrieveFileRequest;
-import cs555.hw1.wireformats.RetrieveFileResponse;
-import cs555.hw1.wireformats.SendFileInfo;
-import cs555.hw1.wireformats.SendMajorHeartbeat;
+import cs555.hw1.wireformats.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -261,6 +250,24 @@ public class Controller implements Node {
     }
 
     private synchronized void handleMinorHeartbeat(Event event) {
+
+        SendMinorHeartbeat heartbeat = (SendMinorHeartbeat) event;
+        Socket socket = heartbeat.getSocket();
+        String chunkServerHostname = socket.getInetAddress().getHostName();
+        long freeSpace = heartbeat.getFreeSpace();
+        int noOfChunks = heartbeat.getNoOfChunks();
+
+        //update chunks/files map
+        ArrayList<String> newChunks = heartbeat.getNewChunks();
+        for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
+            if (socket == entry.getValue()) {
+                chunkServerChunksMap.put(entry.getKey(), newChunks);
+            }
+            chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
+        }
+
+        log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={})",
+                chunkServerHostname, freeSpace, noOfChunks);
     }
 
     private synchronized void handleMajorHeartbeat(Event event) {

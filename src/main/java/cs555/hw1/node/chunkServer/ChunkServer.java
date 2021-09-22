@@ -53,6 +53,9 @@ public class ChunkServer implements Node {
     private volatile ConcurrentHashMap<String, ArrayList<String>> sliceHashesMap;
     private volatile ConcurrentHashMap<String, String> chunkHashesMap;
     private volatile ArrayList<String> chunks;
+    private volatile ArrayList<String> newChunks;
+    private int prevChunkSize;
+
     private String hostName;
 
     public ChunkServer(Socket controllerSocket) throws IOException {
@@ -76,6 +79,12 @@ public class ChunkServer implements Node {
 
         Timer majorTimer = new Timer();
         majorTimer.schedule(new MajorHeartbeat(), 0, Constants.ChunkServer.MAJOR_HEARTBEAT_INTERVAL);
+
+
+        Timer minorTimer = new Timer();
+        minorTimer.schedule(new MinorHeartbeat(), 0, Constants.ChunkServer.MINOR_HEARTBEAT_INTERVAL);
+
+
         initFilesFromDisk();
     }
 
@@ -83,6 +92,36 @@ public class ChunkServer implements Node {
      * Read stored chunks upon start up
      */
     private void initFilesFromDisk() {
+        log.info("Reading files from disk");
+        File dir = new File(Constants.CHUNK_DIR);
+        String[] files = dir.list();
+        if (files != null) {
+            for (String f : files) {
+                if (f.contains(Constants.ChunkServer.EXT_DATA_CHUNK)) {
+                    chunks.add(f);
+
+                    // populate filesMap
+                    /*
+                    String fileName = FileUtil.getFileNameFromChunkName(f);
+                    if (filesMap.containsKey(fileName)) {
+                        StoredFile storedFile = filesMap.get(fileName);
+                        ArrayList<Chunk> chunks = storedFile.getChunks();
+                    } else {
+
+                    }
+                     */
+                }
+            }
+        } else {
+            log.warn("{} is empty", dir.getPath());
+        }
+    }
+
+
+    /**
+     * Read stored chunks at any time by minorHeartBeat
+     */
+    private void ReadFilesFromDisk() {
         log.info("Reading files from disk");
         File dir = new File(Constants.CHUNK_DIR);
         String[] files = dir.list();
@@ -360,12 +399,31 @@ public class ChunkServer implements Node {
         return freeSpaceKB / 1000;
     }
 
-    public static class MinorHeartbeat extends TimerTask {
-        private static final Logger log = LogManager.getLogger(MinorHeartbeat.class);
+    public  class MinorHeartbeat extends TimerTask {
+        private final Logger log = LogManager.getLogger(MinorHeartbeat.class);
 
         @Override
         public void run() {
             SendMinorHeartbeat heartbeat = new SendMinorHeartbeat();
+            if(!newChunks.isEmpty()){
+                heartbeat.setNewChunks(newChunks);
+                chunks.addAll(newChunks);
+                newChunks.clear();
+            }
+            else heartbeat.setNewChunks(null);
+            heartbeat.setFreeSpace(getFreeSpaceMB());
+            heartbeat.setNoOfChunks(chunks.size());
+            // Check for new chunk
+
+
+
+            try {
+                log.info("ChunkServer {} sending minor heartbeat", hostName);
+                controllerConnection.sendData(heartbeat.getBytes());
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -379,6 +437,8 @@ public class ChunkServer implements Node {
                 fileName + Constants.ChunkServer.EXT_DATA_CHUNK + sequenceNumber;
         log.info("outputFileName: {}", outputFileName);
         Files.write(new File(outputFileName).toPath(), chunk);
+        //Add file name to new chunk list
+        newChunks.add(outputFileName);
 
         Chunk chunkObj = new Chunk(sequenceNumber, version, fileName);
 
