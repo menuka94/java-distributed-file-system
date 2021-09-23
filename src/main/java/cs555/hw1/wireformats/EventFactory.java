@@ -60,6 +60,10 @@ public class EventFactory {
                 SendMajorHeartbeat majorHeartbeat = new SendMajorHeartbeat(data);
                 majorHeartbeat.setSocket(socket);
                 return majorHeartbeat;
+            case Protocol.SEND_MINOR_HEARTBEAT:
+                SendMinorHeartbeat minorHeartbeat = new SendMinorHeartbeat(data);
+                minorHeartbeat.setSocket(socket);
+                return minorHeartbeat;
             case Protocol.RETRIEVE_FILE_REQUEST:
                 RetrieveFileRequest retrieveFileRequest = new RetrieveFileRequest(data);
                 retrieveFileRequest.setSocket(socket);

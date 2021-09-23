@@ -63,6 +63,7 @@ public class ChunkServer implements Node {
         controllerConnection = new TCPConnection(controllerSocket, this);
         filesMap = new HashMap<>();
         chunks = new ArrayList<>();
+        newChunks = new ArrayList<>();
         sliceHashesMap = new ConcurrentHashMap<>();
         chunkHashesMap = new ConcurrentHashMap<>();
         hostName = controllerSocket.getLocalAddress().getHostName();
@@ -77,15 +78,20 @@ public class ChunkServer implements Node {
         tcpServerThread.start();
         commandParser.start();
 
-        Timer majorTimer = new Timer();
-        majorTimer.schedule(new MajorHeartbeat(), 0, Constants.ChunkServer.MAJOR_HEARTBEAT_INTERVAL);
+        initFilesFromDisk();
 
 
         Timer minorTimer = new Timer();
         minorTimer.schedule(new MinorHeartbeat(), 0, Constants.ChunkServer.MINOR_HEARTBEAT_INTERVAL);
 
+        Timer majorTimer = new Timer();
+        majorTimer.schedule(new MajorHeartbeat(), 0, Constants.ChunkServer.MAJOR_HEARTBEAT_INTERVAL);
 
-        initFilesFromDisk();
+
+
+
+
+
     }
 
     /**
@@ -404,15 +410,19 @@ public class ChunkServer implements Node {
 
         @Override
         public void run() {
-            SendMinorHeartbeat heartbeat = new SendMinorHeartbeat();
-            if(!newChunks.isEmpty()){
-                heartbeat.setNewChunks(newChunks);
+           SendMinorHeartbeat heartbeat = new SendMinorHeartbeat();
+            heartbeat.setFreeSpace(getFreeSpaceMB());
+            heartbeat.setNoOfChunks(chunks.size());
+            heartbeat.setNoOfNewChunks(newChunks.size());
+
+           heartbeat.setNewChunks(newChunks);
+            if(newChunks.size()>0){
+                //heartbeat.setNewChunks(newChunks);
                 chunks.addAll(newChunks);
                 newChunks.clear();
             }
-            else heartbeat.setNewChunks(null);
-            heartbeat.setFreeSpace(getFreeSpaceMB());
-            heartbeat.setNoOfChunks(chunks.size());
+            //else heartbeat.setNewChunks(null);
+
             // Check for new chunk
 
 
