@@ -255,7 +255,7 @@ public class Client implements Node {
         }
     }
 
-    private void handleRetrieveChunkResponse(Event event) {
+    private synchronized void handleRetrieveChunkResponse(Event event) {
         RetrieveChunkResponse response = (RetrieveChunkResponse) event;
         String chunkName = response.getChunkName();
         byte[] chunk = response.getChunk();
@@ -351,7 +351,7 @@ public class Client implements Node {
      *
      * @param event
      */
-    private void handleRetrieveFileResponse(Event event) throws IOException {
+    private synchronized void handleRetrieveFileResponse(Event event) throws IOException {
         RetrieveFileResponse retrieveFileResponse = (RetrieveFileResponse) event;
 
         // get information about the file

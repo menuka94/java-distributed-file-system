@@ -13,9 +13,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
@@ -275,8 +278,8 @@ public class Controller implements Node {
         for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
             if (socket == entry.getValue()) {
                 chunkServerChunksMap.put(entry.getKey(), chunks);
+                chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
             }
-            chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
 
         log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={})",
@@ -387,24 +390,25 @@ public class Controller implements Node {
         log.debug("sendChunkServerToClient(event): {}",
                 ProtocolLookup.getEventLiteral(event.getType()));
 
-        String[] chunkServerHosts = new String[3];
-        String[] chunkServerHostNames = new String[3];
-        int[] chunkServerPorts = new int[3];
+        String[] chunkServerHosts = new String[Constants.REPLICATION_LEVEL];
+        String[] chunkServerHostNames = new String[Constants.REPLICATION_LEVEL];
+        int[] chunkServerPorts = new int[Constants.REPLICATION_LEVEL];
 
         int noOfLiveChunkServers = chunkServerSocketMap.keySet().size();
         if (noOfLiveChunkServers < 3) {
             log.warn("No. of Live Chunk Servers is less than 3. Returning...");
             return;
         }
-        ArrayList<Integer> assignedIDs = new ArrayList<>(chunkServerSocketMap.keySet());
+
+        ArrayList<Integer> selectedChunkServerIDs = getChunkServersWithHighestFreeSpace();
 
         // select 3 registered chunk servers
-        for (int i = 0; i < 3; i++) {
-            String chunkServerHost = chunkServerSocketMap.get(assignedIDs.get(i))
+        for (int i = 0; i < Constants.REPLICATION_LEVEL; i++) {
+            String chunkServerHost = chunkServerSocketMap.get(selectedChunkServerIDs.get(i))
                     .getInetAddress().getHostAddress();
-            String chunkServerHostName = chunkServerSocketMap.get(assignedIDs.get(i))
+            String chunkServerHostName = chunkServerSocketMap.get(selectedChunkServerIDs.get(i))
                     .getInetAddress().getCanonicalHostName();
-            int chunkServerPort = chunkServerListeningPortMap.get(assignedIDs.get(i));
+            int chunkServerPort = chunkServerListeningPortMap.get(selectedChunkServerIDs.get(i));
             chunkServerHosts[i] = chunkServerHost;
             chunkServerHostNames[i] = chunkServerHostName;
             chunkServerPorts[i] = chunkServerPort;
@@ -423,6 +427,29 @@ public class Controller implements Node {
             log.error(e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Get a list of ChunkServer IDs that have the highest free space available
+     * @return
+     */
+    private ArrayList<Integer> getChunkServersWithHighestFreeSpace() {
+        ArrayList<Integer> ids = new ArrayList<>();
+        ArrayList<Long> sortedFreeSpaces = new ArrayList<>(chunkServerFreeSpaceMap.values());
+        log.info("freeSpaces (before sorting): {}", sortedFreeSpaces);
+        sortedFreeSpaces.sort(Comparator.reverseOrder());
+        log.info("freeSpaces (after sorting): {}", sortedFreeSpaces);
+        List<Long> topNFreeSpaces = sortedFreeSpaces.subList(0, Constants.REPLICATION_LEVEL);
+        log.info("topNFreeSpaces: {}", topNFreeSpaces);
+        for (Map.Entry<Integer, Long> entry : chunkServerFreeSpaceMap.entrySet()) {
+            if (topNFreeSpaces.contains(entry.getValue())) {
+                ids.add(entry.getKey());
+            }
+        }
+
+        assert ids.size() == topNFreeSpaces.size();
+
+        return ids;
     }
 
     /**
