@@ -45,8 +45,8 @@ public class SendMinorHeartbeat extends Event {
 
         newChunks = new ArrayList<>();
 
-        // read new chunk information
-        for (int i = 0; i < totNewChunks; i++) {
+        // read updated chunk information
+        for (int i = 0; i < noOfChunks; i++) {
             int chunkInfoLength = din.readInt();
             byte[] chunkInfo = new byte[chunkInfoLength];
             din.readFully(chunkInfo, 0, chunkInfoLength);
@@ -75,8 +75,8 @@ public class SendMinorHeartbeat extends Event {
             //write no of new Chunks
             dout.writeInt(totNewChunks);
 
-         //    write chunk information
-            if(newChunks.size()>0)
+         //    write updated chunks information
+            //if(newChunks.size()>0)
             for (String chunk : newChunks) {
                 dout.writeInt(chunk.getBytes().length);
                 dout.write(chunk.getBytes());
@@ -119,6 +119,9 @@ public class SendMinorHeartbeat extends Event {
 
     public int getNoOfChunks() {
         return noOfChunks;
+    }
+    public int getNoOfNewChunks() {
+        return totNewChunks;
     }
 
     public void setNoOfChunks(int noOfChunks) {

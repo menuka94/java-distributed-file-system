@@ -54,7 +54,7 @@ public class ChunkServer implements Node {
     private volatile ConcurrentHashMap<String, String> chunkHashesMap;
     private volatile ArrayList<String> chunks;
     private volatile ArrayList<String> newChunks;
-    private int prevChunkSize;
+    private volatile int prevChunkSize;
 
     private String hostName;
 
@@ -64,6 +64,7 @@ public class ChunkServer implements Node {
         filesMap = new HashMap<>();
         chunks = new ArrayList<>();
         newChunks = new ArrayList<>();
+        prevChunkSize = 0;
         sliceHashesMap = new ConcurrentHashMap<>();
         chunkHashesMap = new ConcurrentHashMap<>();
         hostName = controllerSocket.getLocalAddress().getHostName();
@@ -118,7 +119,10 @@ public class ChunkServer implements Node {
                      */
                 }
             }
-        } else {
+            prevChunkSize= chunks.size();
+        }
+
+        else {
             log.warn("{} is empty", dir.getPath());
         }
     }
@@ -411,16 +415,21 @@ public class ChunkServer implements Node {
         @Override
         public void run() {
            SendMinorHeartbeat heartbeat = new SendMinorHeartbeat();
-            heartbeat.setFreeSpace(getFreeSpaceMB());
-            heartbeat.setNoOfChunks(chunks.size());
-            heartbeat.setNoOfNewChunks(newChunks.size());
 
-           heartbeat.setNewChunks(newChunks);
-            if(newChunks.size()>0){
-                //heartbeat.setNewChunks(newChunks);
-                chunks.addAll(newChunks);
-                newChunks.clear();
-            }
+            heartbeat.setNoOfChunks(chunks.size());
+            heartbeat.setFreeSpace(getFreeSpaceMB());
+
+            heartbeat.setNoOfNewChunks(chunks.size()-prevChunkSize);
+            prevChunkSize=chunks.size();
+            heartbeat.setNewChunks(chunks);
+
+
+           //heartbeat.setNewChunks(newChunks);
+//            if(newChunks.size()>0){
+//                //heartbeat.setNewChunks(newChunks);
+//                chunks.addAll(newChunks);
+//                newChunks.clear();
+//            }
             //else heartbeat.setNewChunks(null);
 
             // Check for new chunk
