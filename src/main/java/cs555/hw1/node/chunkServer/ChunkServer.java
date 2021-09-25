@@ -267,11 +267,11 @@ public class ChunkServer implements Node {
 
             //Corruption handling.......
             if (corrupted | corruptedChunk){
-                //notify Controller
+             //notify Controller
                 ReportChunkCorruption reportCorChunk = new ReportChunkCorruption();
                 reportCorChunk.setChunkName(chunkName);
                 try {
-                    log.info("ChunkServer {} notify controller about chunk corruption", hostName);
+                    log.info("ChunkServer {} is notifying controller about chunk corruption", hostName);
                     controllerConnection.sendData(reportCorChunk.getBytes());
                 } catch (IOException e) {
                     log.error(e.getLocalizedMessage());

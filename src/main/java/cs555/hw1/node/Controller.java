@@ -260,8 +260,8 @@ public class Controller implements Node {
         String chunkServerHostname = socket.getInetAddress().getHostName();
 
 
-        log.info("Corrupted Chunk info: Chunk Name {} at ChunkServer '{}'",
-                chunkServerHostname, corChunkName);
+        log.info("!!! Corrupted Chunk !!! Info: Chunk Name {} has been corrupted at ChunkServer '{}'",
+                corChunkName, chunkServerHostname);
     }
 
 
