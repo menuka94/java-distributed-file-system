@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class FixCorruptChunk extends Event {
-    private static final Logger log = LogManager.getLogger();
+    private static final Logger log = LogManager.getLogger(FixCorruptChunk.class);
 
     private Socket socket;
     private String chunkName;
@@ -33,7 +33,41 @@ public class FixCorruptChunk extends Event {
         byte messageType = din.readByte();
         EventValidator.validateEventType(messageType, getType(), log);
 
-        // read chunkName
+
+        // write chunkName
+        // read file name
+        int chunkNameLength = din.readInt();
+        byte[] chunkNameBytes = new byte[chunkNameLength];
+        din.readFully(chunkNameBytes, 0, chunkNameLength);
+        chunkName = new String(chunkNameBytes);
+
+
+
+        // read chunkServerHosts
+
+            int hostLength = din.readInt();
+            byte[] hostBytes = new byte[hostLength];
+            din.readFully(hostBytes, 0, hostLength);
+            chunkServerHost = new String(hostBytes);
+
+
+        // read chunkServerHostNames
+
+
+            int hostNameLength = din.readInt();
+            byte[] hostNameBytes = new byte[hostNameLength];
+            din.readFully(hostNameBytes, 0, hostNameLength);
+            chunkServerHostname = new String(hostNameBytes);
+
+
+        // read chunkServerPorts
+
+
+            chunkServerPort = din.readInt();
+
+
+        baInputStream.close();
+        din.close();
 
 
     }
