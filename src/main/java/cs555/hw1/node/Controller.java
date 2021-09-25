@@ -340,18 +340,20 @@ public class Controller implements Node {
         String chunkServerHostname = socket.getInetAddress().getHostName();
         long freeSpace = heartbeat.getFreeSpace();
         int noOfChunks = heartbeat.getNoOfChunks();
+        int noOfNewChunks = heartbeat.getNoOfNewChunks();
+
 
         //update chunks/files map
-        ArrayList<String> newChunks = heartbeat.getNewChunks();
+        ArrayList<String> chunks = heartbeat.getNewChunks();
         for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
             if (socket == entry.getValue()) {
-                chunkServerChunksMap.put(entry.getKey(), newChunks);
+                chunkServerChunksMap.put(entry.getKey(), chunks);
             }
             chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
 
-        log.info("Major Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={})",
-                chunkServerHostname, freeSpace, noOfChunks);
+        log.info("Minor Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={}, #newChunks={})"
+                ,chunkServerHostname, freeSpace, noOfChunks,noOfNewChunks);
     }
 
     private synchronized void handleMajorHeartbeat(Event event) {

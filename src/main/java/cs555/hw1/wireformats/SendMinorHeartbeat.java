@@ -19,6 +19,7 @@ public class SendMinorHeartbeat extends Event {
     private int noOfChunks;
     private ArrayList<String> newChunks;
     private long freeSpace;
+    private int totNewChunks;
 
     public SendMinorHeartbeat() {
 
@@ -35,18 +36,23 @@ public class SendMinorHeartbeat extends Event {
         // read number of chunks
         noOfChunks = din.readInt();
 
+
+        // read free space
+        freeSpace = din.readLong();
+
+        //read total new chunks
+        totNewChunks = din.readInt();
+
         newChunks = new ArrayList<>();
 
-        // read new chunk information
-        for (int i = 0; i < 1; i++) {
+        // read updated chunk information
+        for (int i = 0; i < noOfChunks; i++) {
             int chunkInfoLength = din.readInt();
             byte[] chunkInfo = new byte[chunkInfoLength];
             din.readFully(chunkInfo, 0, chunkInfoLength);
             newChunks.add(new String(chunkInfo));
         }
 
-        // read free space
-        freeSpace = din.readLong();
 
         baInputStream.close();
         din.close();
@@ -64,15 +70,19 @@ public class SendMinorHeartbeat extends Event {
             // write number of chunks
             dout.writeInt(noOfChunks);
 
+            // write free space
+            dout.writeLong(freeSpace);
+            //write no of new Chunks
+            dout.writeInt(totNewChunks);
 
-      //       write chunk information
+         //    write updated chunks information
+            //if(newChunks.size()>0)
             for (String chunk : newChunks) {
                 dout.writeInt(chunk.getBytes().length);
                 dout.write(chunk.getBytes());
             }
 
-            // write free space
-            dout.writeLong(freeSpace);
+
 
             dout.flush();
 
@@ -110,9 +120,15 @@ public class SendMinorHeartbeat extends Event {
     public int getNoOfChunks() {
         return noOfChunks;
     }
+    public int getNoOfNewChunks() {
+        return totNewChunks;
+    }
 
     public void setNoOfChunks(int noOfChunks) {
         this.noOfChunks = noOfChunks;
+    }
+    public void setNoOfNewChunks(int noOfNewChunks) {
+        this.totNewChunks = noOfNewChunks;
     }
 
     public long getFreeSpace() {
