@@ -160,6 +160,12 @@ public class Controller implements Node {
             case Protocol.SEND_FILE_INFO:
                 handleSendFileInfo(event);
                 break;
+            case Protocol.REPORT_CHUNK_CORRUPTION:
+                handleChunkCorruptReport(event);
+                break;
+            case Protocol.FIX_CORRUPT_CHUNK:
+                handleChunkFixRequest(event);
+                break;
             default:
                 log.warn("Unknown event type: {}", type);
         }
@@ -244,6 +250,88 @@ public class Controller implements Node {
             e.printStackTrace();
         }
     }
+
+    private synchronized void handleChunkCorruptReport(Event event) {
+
+
+        ReportChunkCorruption reportCorChunk = (ReportChunkCorruption) event;
+        String corChunkName = reportCorChunk.getChunkName();
+        Socket socket = reportCorChunk.getSocket();
+        String chunkServerHostname = socket.getInetAddress().getHostName();
+
+
+        log.info("Corrupted Chunk info: Chunk Name {} at ChunkServer '{}'",
+                chunkServerHostname, corChunkName);
+    }
+
+
+    private void handleChunkFixRequest(Event event) {
+        RetrieveFileRequest retrieveFileRequest = (RetrieveFileRequest) event;
+        String fileName = retrieveFileRequest.getFileName();
+
+        log.info("readFile: {}", fileName);
+
+        int noOfChunks = 0;
+        int fileSize = 0;
+        boolean fileFound = false;
+        for (FileInfo fileInfo : fileInfos) {
+            if (fileInfo.getFileName().equals(fileName)) {
+                fileFound = true;
+                noOfChunks = fileInfo.getNoOfChunks();
+                fileSize = fileInfo.getFileSize();
+            }
+        }
+
+        if (!fileFound) {
+            log.warn("File '{}' not found", fileName);
+            return;
+        }
+
+        // find chunk servers that contain each chunk of the file
+        String[] chunkServerHosts = new String[noOfChunks];
+        String[] chunkServerHostNames = new String[noOfChunks];
+        int[] chunkServerPorts = new int[noOfChunks];
+
+        for (int i = 0; i < noOfChunks; i++) {
+            String chunkName = fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
+
+            // iterate through map <ChunkServerID, chunkNames>
+            for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
+                if (entry.getValue().contains(chunkName)) {
+                    // found a chunk server containing the chunk we're looking for
+                    int chunkServerId = entry.getKey();
+                    Socket socket = chunkServerSocketMap.get(chunkServerId);
+                    chunkServerHosts[i] = socket.getInetAddress().getHostAddress();
+                    chunkServerHostNames[i] = socket.getInetAddress().getHostName();
+                    chunkServerPorts[i] = chunkServerListeningPortMap.get(chunkServerId);
+                }
+            }
+        }
+
+        // sanity check
+        for (String chunkServerHost : chunkServerHosts) {
+            if ("".equals(chunkServerHost)) {
+                log.error("No ChunkServer with the needed chunk found.");
+            }
+        }
+
+        // send response to client
+        RetrieveFileResponse retrieveFileResponse = new RetrieveFileResponse();
+        retrieveFileResponse.setFileName(fileName);
+        retrieveFileResponse.setNoOfChunks(noOfChunks);
+        retrieveFileResponse.setFileSize(fileSize);
+        retrieveFileResponse.setChunkServerHosts(chunkServerHosts);
+        retrieveFileResponse.setChunkServerHostNames(chunkServerHostNames);
+        retrieveFileResponse.setChunkServerPorts(chunkServerPorts);
+
+        try {
+            clientConnection.sendData(retrieveFileResponse.getBytes());
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     private synchronized void handleMinorHeartbeat(Event event) {
 

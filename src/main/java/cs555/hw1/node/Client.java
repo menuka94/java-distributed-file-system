@@ -371,7 +371,7 @@ public class Client implements Node {
 
         // contact chunk servers and retrieve the chunks
         for (int i = 0; i < noOfChunks; i++) {
-            Socket socket = new Socket(chunkServerHosts[i], chunkServerPorts[i]);
+            Socket socket = new Socket(chunkServerHosts[i], chunkServerPorts[i]); //confusion why chunkServerHosts[i]
             TCPConnection tcpConnection;
             if (tcpConnectionsCache.containsConnection(socket)) {
                 tcpConnection = tcpConnectionsCache.getConnection(socket);

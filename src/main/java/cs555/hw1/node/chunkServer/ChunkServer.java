@@ -9,15 +9,7 @@ import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
-import cs555.hw1.wireformats.Event;
-import cs555.hw1.wireformats.Protocol;
-import cs555.hw1.wireformats.RegisterChunkServer;
-import cs555.hw1.wireformats.ReportChunkServerRegistration;
-import cs555.hw1.wireformats.RetrieveChunkRequest;
-import cs555.hw1.wireformats.RetrieveChunkResponse;
-import cs555.hw1.wireformats.SendMajorHeartbeat;
-import cs555.hw1.wireformats.SendMinorHeartbeat;
-import cs555.hw1.wireformats.StoreChunk;
+import cs555.hw1.wireformats.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -238,9 +230,10 @@ public class ChunkServer implements Node {
             // verify the integrity of each slice of the chunks
             // (verify slices on disks against the stored ones)
             ArrayList<String> sliceHashes = FileUtil.getSliceHashesFromChunk(chunkOnDisk);
-            ArrayList<String> storedSliceHashes = sliceHashesMap.get(chunkName);
+            ArrayList<String> storedSliceHashes = sliceHashesMap.get(chunkName);  //if chunk server is restarted sliceHashMap might be empty
             assert sliceHashes.size() == storedSliceHashes.size();
             boolean corrupted = false;
+            boolean corruptedChunk = false;
             for (int i = 0; i < sliceHashes.size(); i++) {
                 if (!sliceHashes.get(i).equals(storedSliceHashes.get(i))) {
                     log.warn("Slice {} of {} is corrupted", (i + 1), chunkName);
@@ -257,8 +250,25 @@ public class ChunkServer implements Node {
             String expectedHash = chunkHashesMap.get(chunkName);
             if (!expectedHash.equals(readHash)) {
                 log.warn("Chunk hashes do not match for {}", chunkName);
+                corruptedChunk = true;
             } else {
                 log.info("{}'s integrity confirmed!", chunkName);
+            }
+
+            //Corruption handling.......
+            if (corrupted | corruptedChunk){
+                //notify Controller
+                ReportChunkCorruption reportCorChunk = new ReportChunkCorruption();
+                reportCorChunk.setChunkName(chunkName);
+                try {
+                    log.info("ChunkServer {} notify controller about chunk corruption", hostName);
+                    controllerConnection.sendData(reportCorChunk.getBytes());
+                } catch (IOException e) {
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+
+
             }
 
             RetrieveChunkResponse response = new RetrieveChunkResponse();

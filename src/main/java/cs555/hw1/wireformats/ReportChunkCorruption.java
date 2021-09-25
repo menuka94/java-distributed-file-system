@@ -63,7 +63,7 @@ public class ReportChunkCorruption extends Event {
 
     @Override
     public int getType() {
-        return Protocol.FIX_CORRUPT_CHUNK;
+        return Protocol.REPORT_CHUNK_CORRUPTION;
     }
 
     @Override
