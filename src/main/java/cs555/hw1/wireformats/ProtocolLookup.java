@@ -35,6 +35,10 @@ public class ProtocolLookup {
                 return "REPORT_CHUNK_CORRUPTION";
             case Protocol.FIX_CORRUPT_CHUNK:
                 return "FIX_CORRUPT_CHUNK";
+            case Protocol.LIVENESS_REQUEST:
+                return "LIVENESS_REQUEST";
+            case Protocol.LIVENESS_RESPONSE:
+                return "LIVENESS_RESPONSE";
             default:
                 return "ERROR: Unknown Event: " + type;
         }

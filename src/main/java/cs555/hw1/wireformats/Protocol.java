@@ -19,4 +19,6 @@ public interface Protocol {
     int REPORT_CHUNK_CORRUPTION = 17;
     int FIX_CORRUPT_CHUNK = 18;
     int FIX_CORRUPT_CHUNK_RESPONSE = 19;
+    int LIVENESS_REQUEST = 20;
+    int LIVENESS_RESPONSE = 21;
 }
