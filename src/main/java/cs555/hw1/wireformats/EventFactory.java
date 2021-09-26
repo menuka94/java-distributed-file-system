@@ -96,14 +96,10 @@ public class EventFactory {
                 FixCorruptChunkResponse fixCorruptChunkResponse = new FixCorruptChunkResponse(data);
                 fixCorruptChunkResponse.setSocket(socket);
                 return fixCorruptChunkResponse;
-            case Protocol.LIVENESS_REQUEST:
-                LivenessRequest livenessRequest = new LivenessRequest(data);
-                livenessRequest.setSocket(socket);
-                return livenessRequest;
-            case Protocol.LIVENESS_RESPONSE:
-                LivenessResponse livenessResponse = new LivenessResponse(data);
-                livenessResponse.setSocket(socket);
-                return livenessResponse;
+            case Protocol.LIVENESS_HEARTBEAT:
+                LivenessHeartbeat livenessHeartbeat = new LivenessHeartbeat(data);
+                livenessHeartbeat.setSocket(socket);
+                return livenessHeartbeat;
             //FixCorruptChunk fixCorruptChunk = new FixCorruptChunk(data);
             //fixCorruptChunk.setSocket(socket);
             //return fixCorruptChunk;

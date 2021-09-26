@@ -11,6 +11,7 @@ import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.FixCorruptChunk;
+import cs555.hw1.wireformats.LivenessHeartbeat;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.RegisterChunkServer;
 import cs555.hw1.wireformats.ReportChunkCorruption;
@@ -89,8 +90,6 @@ public class ChunkServer implements Node {
 
         Timer majorTimer = new Timer();
         majorTimer.schedule(new MajorHeartbeat(), 0, Constants.ChunkServer.MAJOR_HEARTBEAT_INTERVAL);
-
-
     }
 
     /**
@@ -218,13 +217,11 @@ public class ChunkServer implements Node {
             case Protocol.FIX_CORRUPT_CHUNK:
                 try {
                     handleFixCorruptChunk(event);
-
                 } catch (IOException e) {
                     log.error("Error storing chunk");
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
                 }
-
                 break;
             case Protocol.RETRIEVE_CHUNK_RESPONSE:
                 try {
@@ -234,9 +231,17 @@ public class ChunkServer implements Node {
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
                 }
+                break;
+            case Protocol.LIVENESS_HEARTBEAT:
+                handleLivenessHeartbeat(event);
+                break;
             default:
                 log.warn("Unknown event type: {}", type);
         }
+    }
+
+    private void handleLivenessHeartbeat(Event event) {
+        log.debug("Liveness Heartbeat");
     }
 
     /**
@@ -564,6 +569,21 @@ public class ChunkServer implements Node {
 
             try {
                 log.info("ChunkServer {} sending minor heartbeat", hostName);
+                controllerConnection.sendData(heartbeat.getBytes());
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public class LivenessHeartbeatSender extends TimerTask {
+        private final Logger log = LogManager.getLogger(LivenessHeartbeatSender.class);
+
+        @Override
+        public void run() {
+            LivenessHeartbeat heartbeat = new LivenessHeartbeat();
+            try {
                 controllerConnection.sendData(heartbeat.getBytes());
             } catch (IOException e) {
                 log.error(e.getLocalizedMessage());

@@ -29,13 +29,8 @@ public class TCPConnection {
         if (tcpSender == null) {
             tcpSender = new TCPSender(socket);
         }
-        try {
-            tcpSender.sendData(data);
-        } catch (IOException e) {
-            log.error("Error while sending data...");
-            log.error(e.getMessage());
-            e.printStackTrace();
-        }
+
+        tcpSender.sendData(data);
     }
 
     public byte[] getDestinationAddress() {

@@ -10,6 +10,7 @@ import cs555.hw1.util.controller.FileInfo;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
 import cs555.hw1.wireformats.FixCorruptChunk;
+import cs555.hw1.wireformats.LivenessHeartbeat;
 import cs555.hw1.wireformats.Protocol;
 import cs555.hw1.wireformats.ProtocolLookup;
 import cs555.hw1.wireformats.RegisterChunkServer;
@@ -34,6 +35,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -96,6 +99,9 @@ public class Controller implements Node {
     public void initialize() {
         tcpServerThread.start();
         commandParser.start();
+
+        Timer minorTimer = new Timer();
+        minorTimer.schedule(new LivenessCheck(), 0, Constants.ChunkServer.LIVENESS_HEARTBEAT_INTERVAL);
     }
 
     public static void main(String[] args) throws IOException {
@@ -176,13 +182,50 @@ public class Controller implements Node {
             case Protocol.REPORT_CHUNK_CORRUPTION:
                 handleReportChunkCorruption(event);
                 break;
-            //            case Protocol.FIX_CORRUPT_CHUNK:
-            //                handleChunkFixRequest(event);
-            //                break;
+            case Protocol.LIVENESS_HEARTBEAT:
+                handleLivenessHeartbeat(event);
+                break;
+            // case Protocol.FIX_CORRUPT_CHUNK:
+            //     handleChunkFixRequest(event);
+            //     break;
             default:
                 log.warn("Unknown event type: {}", type);
         }
     }
+
+    private synchronized void handleLivenessHeartbeat(Event event) {
+        cs555.hw1.wireformats.LivenessHeartbeat response = (cs555.hw1.wireformats.LivenessHeartbeat) event;
+        Socket socket = response.getSocket();
+        if (tcpConnectionsCache.containsConnection(socket)) {
+            // valid chunk server
+            String hostName = socket.getInetAddress().getHostName();
+            log.info("LivenessHeartbeat received from ChunkServer {}", hostName);
+        } else {
+            log.warn("LivenessHeartbeat: ChunkServer connection not found in TCPConnectionsCache");
+        }
+    }
+
+    public class LivenessCheck extends TimerTask {
+        private final Logger log = LogManager.getLogger(LivenessCheck.class);
+
+        @Override
+        public void run() {
+            for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
+                Socket socket = entry.getValue();
+                String hostName = socket.getInetAddress().getHostName();
+                try {
+                    TCPConnection connection = tcpConnectionsCache.getConnection(socket);
+                    LivenessHeartbeat heartbeat = new LivenessHeartbeat();
+                    connection.sendData(heartbeat.getBytes());
+                    log.debug("ChunkServer {} is active", hostName);
+                } catch (IOException e) {
+                    log.warn("ChunkServer {} is not responding", hostName);
+                    log.debug(e.getLocalizedMessage());
+                }
+            }
+        }
+    }
+
 
     private void handleSendFileInfo(Event event) {
         SendFileInfo sendFileInfo = (SendFileInfo) event;
