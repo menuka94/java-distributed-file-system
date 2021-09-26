@@ -205,12 +205,17 @@ public class Controller implements Node {
         }
     }
 
+    /**
+     * Periodically check the connections to all registered ChunkServers
+     */
     public class LivenessCheck extends TimerTask {
         private final Logger log = LogManager.getLogger(LivenessCheck.class);
 
         @Override
         public void run() {
+            // for each chunk server
             for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
+                int chunkServerId = entry.getKey();
                 Socket socket = entry.getValue();
                 String hostName = socket.getInetAddress().getHostName();
                 try {
@@ -220,6 +225,12 @@ public class Controller implements Node {
                     log.debug("ChunkServer {} is active", hostName);
                 } catch (IOException e) {
                     log.warn("ChunkServer {} is not responding", hostName);
+                    // remove chunk server from all maps
+                    chunkServerSocketMap.remove(chunkServerId);
+                    chunkServerFreeSpaceMap.remove(chunkServerId);
+                    chunkServerChunksMap.remove(chunkServerId);
+                    chunkServerListeningPortMap.remove(chunkServerId);
+
                     log.debug(e.getLocalizedMessage());
                 }
             }

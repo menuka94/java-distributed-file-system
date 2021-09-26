@@ -17,4 +17,17 @@
 ### Run ChunkServer (maximum 20 instances on 20 different hosts)
 * `make chunk-server`
 
+## Implementation Tasks
+* Wireformats
+* Client/ChunkServer Registration
+* Chunk Replication
+* Chunk Retrieval
+* Verifying Chunk Integrity
+* File Retrieval
+* Major Heartbeat
+* Minor Heartbeat
+* Liveness Heartbeat
+* Detecting Chunk Corruption
+* Fixing Corrupted Chunks
+
 
