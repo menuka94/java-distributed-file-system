@@ -32,8 +32,10 @@ public class TCPReceiverThread extends Thread {
                 din.readFully(data, 0, dataLength);
                 node.onEvent(EventFactory.getInstance().getEvent(data, socket));
             } catch (IOException e) {
-                log.error(e.getMessage());
-                e.printStackTrace();
+                String hostName = socket.getInetAddress().getHostName();
+                log.warn("Connection to {} terminated", hostName);
+                log.debug(e.getLocalizedMessage());
+                // e.printStackTrace();
                 break;
             }
         }
