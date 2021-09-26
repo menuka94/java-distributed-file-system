@@ -5,6 +5,7 @@ declare -a CHUNK_SERVERS=(
   "lattice-11"
   "lattice-12"
   "lattice-14"
+  "lattice-16"
   "boston" # clear the /tmp/menukaw dir of client
   "nashville"
 #  "salt-lake-city"

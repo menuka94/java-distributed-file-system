@@ -132,7 +132,7 @@ public class Client implements Node {
         sendInitialFileInfo(fileName, chunks.size(), bytes.length);
 
         for (int i = 0; i < chunks.size(); i++) {
-            log.info("Writing chunk: {}", i + 1);
+            log.debug("Writing chunk: {}", i + 1);
             // contact controller and get a list of 3 chunk servers
             sendChunkServerRequestToController();
 
@@ -315,31 +315,21 @@ public class Client implements Node {
             try {
                 Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
                 FileOutputStream fos = new FileOutputStream(Constants.CHUNK_DIR + File.separator + fileName);
+
                 // combine all chunks
                 byte[][] allChunks = new byte[noOfChunks][];
                 for (int i = 0; i < noOfChunks; i++) {
                     allChunks[i] = readingChunksMap.get(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
                 }
                 byte[] combinedBytes = FileUtil.concat(allChunks);
-                log.info("Length 1 of {} assembled on client: {}", fileName, combinedBytes.length);
+
                 fos.write(combinedBytes);
                 fos.flush();
                 fos.close();
 
-                int length2 = 0;
-                for (byte[] aByte : bytes) {
-                    length2 += aByte.length;
-                    // log.info("length of chunk: {}", aByte.length);
-                    // fos.write(aByte);
-                }
-                log.info("Length 2 of {} assembled on client: {}", fileName, length2);
-
                 log.info("Successfully assembled {}!", fileName);
-            } catch (FileNotFoundException e) {
-                log.error("Error assembling {}", fileName);
-                log.error(e.getLocalizedMessage());
-                e.printStackTrace();
             } catch (IOException e) {
+                log.error("Error assembling {}", fileName);
                 log.error(e.getLocalizedMessage());
                 e.printStackTrace();
             }

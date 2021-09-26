@@ -51,7 +51,9 @@ public class FileUtil {
     }
 
     /**
-     * From https://stackoverflow.com/a/20113784
+     * Alternative to splitFile()
+     * splitFile() has some bugs
+     * TODO: unify the two methods
      */
     public static List<byte[]> divideArray(byte[] source, int chunksize) {
         List<byte[]> result = new ArrayList<byte[]>();

@@ -7,13 +7,26 @@ import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
 import cs555.hw1.util.controller.FileInfo;
-import cs555.hw1.wireformats.*;
+import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
+import cs555.hw1.wireformats.Event;
+import cs555.hw1.wireformats.FixCorruptChunk;
+import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.ProtocolLookup;
+import cs555.hw1.wireformats.RegisterChunkServer;
+import cs555.hw1.wireformats.RegisterClient;
+import cs555.hw1.wireformats.ReportChunkCorruption;
+import cs555.hw1.wireformats.ReportChunkServerRegistration;
+import cs555.hw1.wireformats.ReportClientRegistration;
+import cs555.hw1.wireformats.RetrieveFileRequest;
+import cs555.hw1.wireformats.RetrieveFileResponse;
+import cs555.hw1.wireformats.SendFileInfo;
+import cs555.hw1.wireformats.SendMajorHeartbeat;
+import cs555.hw1.wireformats.SendMinorHeartbeat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -161,11 +174,11 @@ public class Controller implements Node {
                 handleSendFileInfo(event);
                 break;
             case Protocol.REPORT_CHUNK_CORRUPTION:
-                handleChunkCorruptReport(event);
+                handleReportChunkCorruption(event);
                 break;
-//            case Protocol.FIX_CORRUPT_CHUNK:
-//                handleChunkFixRequest(event);
-//                break;
+            //            case Protocol.FIX_CORRUPT_CHUNK:
+            //                handleChunkFixRequest(event);
+            //                break;
             default:
                 log.warn("Unknown event type: {}", type);
         }
@@ -251,26 +264,17 @@ public class Controller implements Node {
         }
     }
 
-    private synchronized void handleChunkCorruptReport(Event event) {
-
-
-        ReportChunkCorruption reportCorChunk = (ReportChunkCorruption) event;
-        String corChunkName = reportCorChunk.getChunkName();
-        Socket socket = reportCorChunk.getSocket();
+    private synchronized void handleReportChunkCorruption(Event event) {
+        ReportChunkCorruption reportChunkCorruption = (ReportChunkCorruption) event;
+        String corruptionChunkName = reportChunkCorruption.getChunkName();
+        Socket socket = reportChunkCorruption.getSocket();
         String chunkServerHostname = socket.getInetAddress().getHostName();
 
 
-        log.info("!!! Corrupted Chunk !!! Info: Chunk Name {} has been corrupted at ChunkServer '{}'",
-                corChunkName, chunkServerHostname);
-   // }
+        log.warn("Corrupted Chunk! {} has been corrupted at ChunkServer '{}'",
+                corruptionChunkName, chunkServerHostname);
 
-
-   // private void handleChunkFixRequest(Event event) {
-        //FixCorruptChunk fixCorruptChunk = (FixCorruptChunk) event;
-       // String CorChunkName = fixCorruptChunk.getChunkName();
-        //RetrieveFileRequest retrieveFileRequest = (RetrieveFileRequest) event;
-        //Makefile_chunk1
-        String fileName = corChunkName.split("_")[0]; //retrieveFileRequest.getFileName();
+        String fileName = corruptionChunkName.split("_")[0]; //retrieveFileRequest.getFileName();
 
         log.info("Trying to Recover....: {}", fileName);
 
@@ -293,48 +297,36 @@ public class Controller implements Node {
         // find chunk servers that contain each chunk of the file
         noOfChunks = 1; // only the corrupted chunk
         String chunkServerHosts = ""; //new String();
-        String chunkServerHostNames ="";// new String();
-        int chunkServerPorts =0;
+        String chunkServerHostNames = "";// new String();
+        int chunkServerPorts = 0;
 
         //for (int i = 0; i < noOfChunks; i++) {
-            String chunkName = corChunkName; //fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
+        String chunkName = corruptionChunkName; //fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
 
-            // iterate through map <ChunkServerID, chunkNames>
-            for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
-                if (entry.getValue().contains(chunkName) && chunkServerSocketMap.get(entry.getKey())!=reportCorChunk.getSocket()) {
-                    // found a chunk server containing the chunk we're looking for
-                    int chunkServerId = entry.getKey();
-                    Socket socket2 = chunkServerSocketMap.get(chunkServerId);
-                    chunkServerHosts = socket2.getInetAddress().getHostAddress();
-                    chunkServerHostNames = socket2.getInetAddress().getHostName();
-                    chunkServerPorts = chunkServerListeningPortMap.get(chunkServerId);
-                }
+        // iterate through map <ChunkServerID, chunkNames>
+        for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
+            if (entry.getValue().contains(chunkName) && chunkServerSocketMap.get(entry.getKey()) != reportChunkCorruption.getSocket()) {
+                // found a chunk server containing the chunk we're looking for
+                int chunkServerId = entry.getKey();
+                Socket socket2 = chunkServerSocketMap.get(chunkServerId);
+                chunkServerHosts = socket2.getInetAddress().getHostAddress();
+                chunkServerHostNames = socket2.getInetAddress().getHostName();
+                chunkServerPorts = chunkServerListeningPortMap.get(chunkServerId);
             }
-       // }
+        }
 
-        // sanity check
-        //for (String chunkServerHost : chunkServerHosts) {
-            if ("".equals(chunkServerHosts)) {
-                log.error("No Replica ChunkServer with the needed chunk found.");
-            }
-        //}
+        if ("".equals(chunkServerHosts)) {
+            log.error("No Replica ChunkServer with the needed chunk found.");
+        }
 
         // send response to chunk Server
         FixCorruptChunk fixCorruptChunkInfo = new FixCorruptChunk();
-        fixCorruptChunkInfo.setChunkName(corChunkName);
+        fixCorruptChunkInfo.setChunkName(corruptionChunkName);
         fixCorruptChunkInfo.setChunkServerHost(chunkServerHosts);
         fixCorruptChunkInfo.setChunkServerHostname(chunkServerHostNames);
         fixCorruptChunkInfo.setChunkServerPort(chunkServerPorts);
 
-//        RetrieveFileResponse retrieveFileResponse = new RetrieveFileResponse();
-//        retrieveFileResponse.setFileName(fileName);
-//        retrieveFileResponse.setNoOfChunks(noOfChunks);
-//        retrieveFileResponse.setFileSize(fileSize);
-//        retrieveFileResponse.setChunkServerHosts(chunkServerHosts);
-//        retrieveFileResponse.setChunkServerHostNames(chunkServerHostNames);
-//        retrieveFileResponse.setChunkServerPorts(chunkServerPorts);
-
-        TCPConnection tcpConnection = tcpConnectionsCache.getConnection(reportCorChunk.getSocket());
+        TCPConnection tcpConnection = tcpConnectionsCache.getConnection(reportChunkCorruption.getSocket());
         try {
             tcpConnection.sendData(fixCorruptChunkInfo.getBytes());
         } catch (IOException e) {
@@ -345,7 +337,6 @@ public class Controller implements Node {
 
 
     private synchronized void handleMinorHeartbeat(Event event) {
-
         SendMinorHeartbeat heartbeat = (SendMinorHeartbeat) event;
         Socket socket = heartbeat.getSocket();
         String chunkServerHostname = socket.getInetAddress().getHostName();
@@ -364,7 +355,7 @@ public class Controller implements Node {
         }
 
         log.info("Minor Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={}, #newChunks={})"
-                ,chunkServerHostname, freeSpace, noOfChunks,noOfNewChunks);
+                , chunkServerHostname, freeSpace, noOfChunks, noOfNewChunks);
     }
 
     private synchronized void handleMajorHeartbeat(Event event) {
@@ -532,16 +523,17 @@ public class Controller implements Node {
 
     /**
      * Get a list of ChunkServer IDs that have the highest free space available
+     *
      * @return
      */
     private ArrayList<Integer> getChunkServersWithHighestFreeSpace() {
         ArrayList<Integer> ids = new ArrayList<>();
         ArrayList<Long> sortedFreeSpaces = new ArrayList<>(chunkServerFreeSpaceMap.values());
-        log.info("freeSpaces (before sorting): {}", sortedFreeSpaces);
+        log.debug("freeSpaces (before sorting): {}", sortedFreeSpaces);
         sortedFreeSpaces.sort(Comparator.reverseOrder());
-        log.info("freeSpaces (after sorting): {}", sortedFreeSpaces);
+        log.debug("freeSpaces (after sorting): {}", sortedFreeSpaces);
         List<Long> topNFreeSpaces = sortedFreeSpaces.subList(0, Constants.REPLICATION_LEVEL);
-        log.info("topNFreeSpaces: {}", topNFreeSpaces);
+        log.debug("topNFreeSpaces: {}", topNFreeSpaces);
         for (Map.Entry<Integer, Long> entry : chunkServerFreeSpaceMap.entrySet()) {
             if (topNFreeSpaces.contains(entry.getValue())) {
                 ids.add(entry.getKey());

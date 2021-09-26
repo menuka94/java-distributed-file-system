@@ -107,13 +107,13 @@ public class StoreChunk extends Event {
             for (int i = 0; i < noOfNextChunkServers; i++) {
                 // write host
                 String host = nextChunkServerHosts[i];
-                log.info("Sending host {}: {}", (i + 1), host);
+                log.debug("Sending host {}: {}", (i + 1), host);
                 dout.writeInt(host.getBytes().length);
                 dout.write(host.getBytes());
 
                 // write port
                 dout.writeInt(nextChunkServerPorts[i]);
-                log.info("Sending port {}: {}", (i + 1), nextChunkServerPorts[i]);
+                log.debug("Sending port {}: {}", (i + 1), nextChunkServerPorts[i]);
             }
 
             dout.flush();

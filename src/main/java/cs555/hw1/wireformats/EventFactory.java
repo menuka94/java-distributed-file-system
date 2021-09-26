@@ -96,9 +96,9 @@ public class EventFactory {
                 FixCorruptChunkResponse fixCorruptChunkResponse = new FixCorruptChunkResponse(data);
                 fixCorruptChunkResponse.setSocket(socket);
                 return fixCorruptChunkResponse;
-                //FixCorruptChunk fixCorruptChunk = new FixCorruptChunk(data);
-                //fixCorruptChunk.setSocket(socket);
-                //return fixCorruptChunk;
+            //FixCorruptChunk fixCorruptChunk = new FixCorruptChunk(data);
+            //fixCorruptChunk.setSocket(socket);
+            //return fixCorruptChunk;
             default:
                 log.error("Unknown event type: {}", (int) b);
                 return null;

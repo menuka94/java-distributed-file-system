@@ -4,7 +4,13 @@ import cs555.hw1.util.EventValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -75,13 +81,12 @@ public class SendMinorHeartbeat extends Event {
             //write no of new Chunks
             dout.writeInt(totNewChunks);
 
-         //    write updated chunks information
+            //    write updated chunks information
             //if(newChunks.size()>0)
             for (String chunk : newChunks) {
                 dout.writeInt(chunk.getBytes().length);
                 dout.write(chunk.getBytes());
             }
-
 
 
             dout.flush();
@@ -104,14 +109,13 @@ public class SendMinorHeartbeat extends Event {
     }
 
 
-
     public ArrayList<String> getNewChunks() {
         return newChunks;
     }
 
-//    public void setChunks(ArrayList<String> chunks) {
-//        this.chunks = chunks;
-//    }
+    //    public void setChunks(ArrayList<String> chunks) {
+    //        this.chunks = chunks;
+    //    }
     public void setNewChunks(ArrayList<String> newChunks) {
 
         this.newChunks = newChunks;
@@ -120,6 +124,7 @@ public class SendMinorHeartbeat extends Event {
     public int getNoOfChunks() {
         return noOfChunks;
     }
+
     public int getNoOfNewChunks() {
         return totNewChunks;
     }
@@ -127,6 +132,7 @@ public class SendMinorHeartbeat extends Event {
     public void setNoOfChunks(int noOfChunks) {
         this.noOfChunks = noOfChunks;
     }
+
     public void setNoOfNewChunks(int noOfNewChunks) {
         this.totNewChunks = noOfNewChunks;
     }

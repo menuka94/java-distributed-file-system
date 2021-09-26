@@ -3,14 +3,23 @@ package cs555.hw1.node.chunkServer;
 import cs555.hw1.InteractiveCommandParser;
 import cs555.hw1.models.Chunk;
 import cs555.hw1.models.StoredFile;
-import cs555.hw1.node.Client;
 import cs555.hw1.node.Node;
 import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
 import cs555.hw1.util.FileUtil;
-import cs555.hw1.wireformats.*;
+import cs555.hw1.wireformats.Event;
+import cs555.hw1.wireformats.FixCorruptChunk;
+import cs555.hw1.wireformats.Protocol;
+import cs555.hw1.wireformats.RegisterChunkServer;
+import cs555.hw1.wireformats.ReportChunkCorruption;
+import cs555.hw1.wireformats.ReportChunkServerRegistration;
+import cs555.hw1.wireformats.RetrieveChunkRequest;
+import cs555.hw1.wireformats.RetrieveChunkResponse;
+import cs555.hw1.wireformats.SendMajorHeartbeat;
+import cs555.hw1.wireformats.SendMinorHeartbeat;
+import cs555.hw1.wireformats.StoreChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -218,9 +227,9 @@ public class ChunkServer implements Node {
 
                 break;
             case Protocol.RETRIEVE_CHUNK_RESPONSE:
-                try{
+                try {
                     handleFixCorruptChunkResponse(event);
-                } catch (IOException e){
+                } catch (IOException e) {
                     log.error("Error storing chunk");
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
@@ -281,7 +290,7 @@ public class ChunkServer implements Node {
 
             //Corruption handling.......
             //if(request.getSocket().getInetAddress().getHostName().contains("pollock")){
-            if ( corrupted | corruptedChunk) {
+            if (corrupted | corruptedChunk) {
                 //notify Controller
                 ReportChunkCorruption reportCorChunk = new ReportChunkCorruption();
                 reportCorChunk.setChunkName(chunkName);
@@ -293,17 +302,17 @@ public class ChunkServer implements Node {
                     e.printStackTrace();
                 }
             }
-//            if (corrupted | corruptedChunk) {
-//                FixCorruptChunk fixCorruptChunk = new FixCorruptChunk();
-//                fixCorruptChunk.setChunkName(chunkName);
-//                try {
-//                    log.info("ChunkServer {} is requesting replica information of corrupted chunk: ", hostName);
-//                    controllerConnection.sendData(fixCorruptChunk.getBytes());
-//                } catch (IOException e) {
-//                    log.error(e.getLocalizedMessage());
-//                    e.printStackTrace();
-//                }
-//            }
+            //            if (corrupted | corruptedChunk) {
+            //                FixCorruptChunk fixCorruptChunk = new FixCorruptChunk();
+            //                fixCorruptChunk.setChunkName(chunkName);
+            //                try {
+            //                    log.info("ChunkServer {} is requesting replica information of corrupted chunk: ", hostName);
+            //                    controllerConnection.sendData(fixCorruptChunk.getBytes());
+            //                } catch (IOException e) {
+            //                    log.error(e.getLocalizedMessage());
+            //                    e.printStackTrace();
+            //                }
+            //            }
 
 
             if (corrupted | corruptedChunk) {
@@ -365,34 +374,32 @@ public class ChunkServer implements Node {
 
         // contact chunk servers and retrieve the chunks
 
-            Socket socket = new Socket(chunkServerHost, chunkServerPort);
-            TCPConnection tcpConnection;
-            if (tcpConnectionsCache.containsConnection(socket)) {
-                tcpConnection = tcpConnectionsCache.getConnection(socket);
-            } else {
-                tcpConnection = new TCPConnection(socket, this);
-            }
+        Socket socket = new Socket(chunkServerHost, chunkServerPort);
+        TCPConnection tcpConnection;
+        if (tcpConnectionsCache.containsConnection(socket)) {
+            tcpConnection = tcpConnectionsCache.getConnection(socket);
+        } else {
+            tcpConnection = new TCPConnection(socket, this);
+        }
 
-            RetrieveChunkRequest request = new RetrieveChunkRequest();
-            request.setChunkName(chunkName);
-            tcpConnection.sendData(request.getBytes());
+        RetrieveChunkRequest request = new RetrieveChunkRequest();
+        request.setChunkName(chunkName);
+        tcpConnection.sendData(request.getBytes());
 
-          //  FixCorruptChunkResponse fixRequest = new FixCorruptChunkResponse();
-          //  fixRequest.setChunkName(chunkName);
-
-
+        //  FixCorruptChunkResponse fixRequest = new FixCorruptChunkResponse();
+        //  fixRequest.setChunkName(chunkName);
 
 
         // prepare readingChunks map for storing chunks sent by ChunkServers
-      //  readingChunksMap = new ConcurrentHashMap<>();
-//
-//        // start FileAssembler thread
-//        Client.FileAssembler assembler = new Client.FileAssembler(fileName, noOfChunks);
-//        assembler.start();
+        //  readingChunksMap = new ConcurrentHashMap<>();
+        //
+        //        // start FileAssembler thread
+        //        Client.FileAssembler assembler = new Client.FileAssembler(fileName, noOfChunks);
+        //        assembler.start();
     }
 
 
-    private synchronized void handleFixCorruptChunkResponse(Event event) throws IOException{
+    private synchronized void handleFixCorruptChunkResponse(Event event) throws IOException {
         RetrieveChunkResponse response = (RetrieveChunkResponse) event;
         //FixCorruptChunkResponse fixResponse = (FixCorruptChunkResponse) event;
 
@@ -437,7 +444,7 @@ public class ChunkServer implements Node {
         nextStoreChunkEvent.setFileName(fileName);
 
         int nextChunkServersSize = storeChunk.getNoOfNextChunkServers();
-        log.info("nextChunkServersSize: {}", nextChunkServersSize);
+        log.debug("nextChunkServersSize: {}", nextChunkServersSize);
         String[] nextChunkServerHosts = storeChunk.getNextChunkServerHosts();
         int[] nextChunkServerPorts = storeChunk.getNextChunkServerPorts();
 
@@ -545,11 +552,11 @@ public class ChunkServer implements Node {
 
 
             //heartbeat.setNewChunks(newChunks);
-//            if(newChunks.size()>0){
-//                //heartbeat.setNewChunks(newChunks);
-//                chunks.addAll(newChunks);
-//                newChunks.clear();
-//            }
+            //            if(newChunks.size()>0){
+            //                //heartbeat.setNewChunks(newChunks);
+            //                chunks.addAll(newChunks);
+            //                newChunks.clear();
+            //            }
             //else heartbeat.setNewChunks(null);
 
             // Check for new chunk
