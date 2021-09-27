@@ -320,17 +320,17 @@ public class ChunkServer implements Node {
             //            }
 
 
-            if (corrupted | corruptedChunk) {
-                // wait for chunkServerSockets object to get populated
-                try {
-                    log.info(" Please try to retrieve the files again few seconds later.");
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    log.error("Error while waiting for chunkServers to get populated.");
-                    log.error(e.getLocalizedMessage());
-                    e.printStackTrace();
-                }
-            }
+//            if (corrupted | corruptedChunk) {
+//                // wait for chunkServerSockets object to get populated
+//                try {
+//                    log.info(" Please try to retrieve the files again few seconds later.");
+//                    //Thread.sleep(10000);
+//                } catch (InterruptedException e) {
+//                    log.error("Error while waiting for chunkServers to get populated.");
+//                    log.error(e.getLocalizedMessage());
+//                    e.printStackTrace();
+//                }
+//            }
 
 
             RetrieveChunkResponse response = new RetrieveChunkResponse();
