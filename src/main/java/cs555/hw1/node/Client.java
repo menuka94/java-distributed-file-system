@@ -258,9 +258,11 @@ public class Client implements Node {
         RetrieveChunkResponse response = (RetrieveChunkResponse) event;
         String chunkName = response.getChunkName();
         byte[] chunk = response.getChunk();
-        String chunkHash = response.getChunkHash();
-        if (!FileUtil.hash(chunk).equals(chunkHash)) {
-            log.warn("{}'s hashes do not match!", chunkName);
+        String expectedChunkHash = response.getChunkHash();
+
+        if (!FileUtil.hash(chunk).equals(expectedChunkHash)) {
+            log.warn("{}'s hashes do not match!!!! Failed at first attempt!!", chunkName);
+            throw new NullPointerException();
         } else {
             log.info("{}'s integrity confirmed!", chunkName);
         }
@@ -269,6 +271,7 @@ public class Client implements Node {
             log.warn("readingChunksMap has not been initialized");
             throw new NullPointerException();
         } else {
+            if(FileUtil.hash(chunk).equals(expectedChunkHash))
             readingChunksMap.put(chunkName, chunk);
         }
     }
