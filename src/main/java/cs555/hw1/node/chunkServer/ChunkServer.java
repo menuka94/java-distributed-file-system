@@ -332,6 +332,8 @@ public class ChunkServer implements Node {
 //                }
 //            }
 
+            // Using a sleep time the chunk information can be again read for the corrected chunk
+            //Now the corrupted chunk will be passed to see the reflection from client
 
             RetrieveChunkResponse response = new RetrieveChunkResponse();
             response.setChunkName(chunkName);
