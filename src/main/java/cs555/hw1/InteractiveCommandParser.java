@@ -70,11 +70,13 @@ public class InteractiveCommandParser extends Thread {
             nextCommand = scanner.nextLine().trim();
             if (nextCommand.contains(Constants.Controller.CMD_GET_HOST)) {
                 controller.printHost();
-            } else if (nextCommand.equals(Constants.Controller.CMD_LIST_CHUNK_SERVERS) ||
-                    nextCommand.equals("list-cs")) {
+            } else if (nextCommand.contains(Constants.Controller.CMD_LIST_CHUNK_SERVERS) ||
+                    nextCommand.contains("list-cs") || nextCommand.contains("get-cs")) {
                 controller.listChunkServers();
-            } else if (nextCommand.contains("list-chunks") || nextCommand.contains("get-chunks")) {
-                controller.printChunks();
+            } else if (nextCommand.equals("list-chunks") || nextCommand.contains("get-chunks")) {
+                controller.printChunks(true);
+            } else if(nextCommand.equals("list-chunks-summary")) {
+                controller.printChunks(false);
             } else if (nextCommand.contains("list-files") || nextCommand.contains("get-files")) {
                 controller.printFiles();
             } else if (nextCommand.equals("")) {

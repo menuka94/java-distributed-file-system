@@ -205,6 +205,7 @@ public class Controller implements Node {
         }
     }
 
+
     /**
      * Periodically check the connections to all registered ChunkServers
      */
@@ -602,15 +603,18 @@ public class Controller implements Node {
     /**
      * Print information about chunks in all registered chunk servers
      */
-    public synchronized void printChunks() {
+    public synchronized void printChunks(boolean printChunks) {
         for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
             Integer id = entry.getKey(); // ChunkServer ID
             String hostName = chunkServerSocketMap.get(id).getInetAddress().getHostName();
             System.out.println("-----------------------------------------");
             System.out.println("Chunk Server: " + hostName);
             System.out.println("[*] Free Space: " + chunkServerFreeSpaceMap.get(id) + " MB");
-            for (String chunk : entry.getValue()) {
-                System.out.println("[*] " + chunk);
+            System.out.println("[*] No. of chunks: " + entry.getValue().size());
+            if (printChunks) {
+                for (String chunk : entry.getValue()) {
+                    System.out.println("[*] " + chunk);
+                }
             }
         }
     }
