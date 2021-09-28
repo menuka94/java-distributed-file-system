@@ -52,6 +52,7 @@ public class Client implements Node {
 
     // map to store chunks when retrieving a file
     private volatile ConcurrentHashMap<String, byte[]> readingChunksMap;
+    private boolean fileCorrupted;
 
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
@@ -205,7 +206,7 @@ public class Client implements Node {
     public synchronized void retrieveFile(String fileName) throws IOException {
         RetrieveFileRequest retrieveFileRequest = new RetrieveFileRequest();
         retrieveFileRequest.setFileName(fileName);
-
+        fileCorrupted = false;
         controllerConnection.sendData(retrieveFileRequest.getBytes());
     }
 
@@ -258,9 +259,12 @@ public class Client implements Node {
         RetrieveChunkResponse response = (RetrieveChunkResponse) event;
         String chunkName = response.getChunkName();
         byte[] chunk = response.getChunk();
-        String chunkHash = response.getChunkHash();
-        if (!FileUtil.hash(chunk).equals(chunkHash)) {
-            log.warn("{}'s hashes do not match!", chunkName);
+        String expectedChunkHash = response.getChunkHash();
+
+        if (!FileUtil.hash(chunk).equals(expectedChunkHash)) {
+            log.warn(" {}'s hashes do not match (Corrupted)!!!! Please try again!", chunkName);
+            fileCorrupted = true;
+            //throw new NullPointerException();
         } else {
             log.info("{}'s integrity confirmed!", chunkName);
         }
@@ -269,6 +273,7 @@ public class Client implements Node {
             log.warn("readingChunksMap has not been initialized");
             throw new NullPointerException();
         } else {
+           // if(FileUtil.hash(chunk).equals(expectedChunkHash))
             readingChunksMap.put(chunkName, chunk);
         }
     }
@@ -303,34 +308,41 @@ public class Client implements Node {
                     e.printStackTrace();
                 }
             }
-
-            // all chunks have been received. Proceed to assembling the file.
-            log.info("Received all chunks for {}", fileName);
-            ArrayList<byte[]> bytes = new ArrayList<>();
-            for (String iChunk : readingKeySet) {
-                bytes.add(readingChunksMap.get(iChunk));
+            if (fileCorrupted) {
+                log.error(" File is Corrupted!!! Try again please.");
+                //new IOException();
             }
+            else{
 
-            try {
-                Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
-                FileOutputStream fos = new FileOutputStream(Constants.CHUNK_DIR + File.separator + fileName);
-
-                // combine all chunks
-                byte[][] allChunks = new byte[noOfChunks][];
-                for (int i = 0; i < noOfChunks; i++) {
-                    allChunks[i] = readingChunksMap.get(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
+                // all chunks have been received. Proceed to assembling the file.
+                log.info("Received all chunks for {}", fileName);
+                ArrayList<byte[]> bytes = new ArrayList<>();
+                for (String iChunk : readingKeySet) {
+                    bytes.add(readingChunksMap.get(iChunk));
                 }
-                byte[] combinedBytes = FileUtil.concat(allChunks);
 
-                fos.write(combinedBytes);
-                fos.flush();
-                fos.close();
 
-                log.info("Successfully assembled {}!", fileName);
-            } catch (IOException e) {
-                log.error("Error assembling {}", fileName);
-                log.error(e.getLocalizedMessage());
-                e.printStackTrace();
+                try {
+                    Files.createDirectories(Paths.get(Constants.CHUNK_DIR));
+                    FileOutputStream fos = new FileOutputStream(Constants.CHUNK_DIR + File.separator + fileName);
+
+                    // combine all chunks
+                    byte[][] allChunks = new byte[noOfChunks][];
+                    for (int i = 0; i < noOfChunks; i++) {
+                        allChunks[i] = readingChunksMap.get(fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1));
+                    }
+                    byte[] combinedBytes = FileUtil.concat(allChunks);
+
+                    fos.write(combinedBytes);
+                    fos.flush();
+                    fos.close();
+
+                    log.info("Successfully assembled file:  {} and copied to this directory {}", fileName,Constants.CHUNK_DIR);
+                } catch (IOException e) {
+                    log.error("Error assembling {}", fileName);
+                    log.error(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
             }
         }
     }
