@@ -272,7 +272,12 @@ public class ChunkServer implements Node {
             assert sliceHashes.size() == storedSliceHashes.size();
             boolean corrupted = false;
             boolean corruptedChunk = false;
-            for (int i = 0; i < sliceHashes.size(); i++) {
+            int sliceHashSize =sliceHashes.size();
+            if (storedSliceHashes.size()<sliceHashSize){  // if more information is deleted from the chunk there might not have 8 slices always
+                sliceHashSize = storedSliceHashes.size();
+            }
+                
+            for (int i = 0; i < sliceHashSize; i++) {
                 if (!sliceHashes.get(i).equals(storedSliceHashes.get(i))) {
                     log.warn("Slice {} of {} is corrupted", (i + 1), chunkName);
                     corrupted = true;
@@ -333,7 +338,7 @@ public class ChunkServer implements Node {
 //            }
 
             // Using a sleep time the chunk information can be again read for the corrected chunk
-            //Now the corrupted chunk will be passed to see the reflection from client
+            //Now the corrupted chunk will be passed to see the reflection from clientpull
 
             RetrieveChunkResponse response = new RetrieveChunkResponse();
             response.setChunkName(chunkName);
