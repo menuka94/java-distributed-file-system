@@ -31,8 +31,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -83,7 +85,6 @@ public class ChunkServer implements Node {
         commandParser.start();
 
         initFilesFromDisk();
-
 
         Timer minorTimer = new Timer();
         minorTimer.schedule(new MinorHeartbeat(), 0, Constants.ChunkServer.MINOR_HEARTBEAT_INTERVAL);
@@ -272,11 +273,11 @@ public class ChunkServer implements Node {
             assert sliceHashes.size() == storedSliceHashes.size();
             boolean corrupted = false;
             boolean corruptedChunk = false;
-            int sliceHashSize =sliceHashes.size();
-            if (storedSliceHashes.size()<sliceHashSize){  // if more information is deleted from the chunk there might not have 8 slices always
+            int sliceHashSize = sliceHashes.size();
+            if (storedSliceHashes.size() < sliceHashSize) {  // if more information is deleted from the chunk there might not have 8 slices always
                 sliceHashSize = storedSliceHashes.size();
             }
-                
+
             for (int i = 0; i < sliceHashSize; i++) {
                 if (!sliceHashes.get(i).equals(storedSliceHashes.get(i))) {
                     log.warn("Slice {} of {} is corrupted", (i + 1), chunkName);
@@ -325,17 +326,17 @@ public class ChunkServer implements Node {
             //            }
 
 
-//            if (corrupted | corruptedChunk) {
-//                // wait for chunkServerSockets object to get populated
-//                try {
-//                    log.info(" Please try to retrieve the files again few seconds later.");
-//                    //Thread.sleep(10000);
-//                } catch (InterruptedException e) {
-//                    log.error("Error while waiting for chunkServers to get populated.");
-//                    log.error(e.getLocalizedMessage());
-//                    e.printStackTrace();
-//                }
-//            }
+            //            if (corrupted | corruptedChunk) {
+            //                // wait for chunkServerSockets object to get populated
+            //                try {
+            //                    log.info(" Please try to retrieve the files again few seconds later.");
+            //                    //Thread.sleep(10000);
+            //                } catch (InterruptedException e) {
+            //                    log.error("Error while waiting for chunkServers to get populated.");
+            //                    log.error(e.getLocalizedMessage());
+            //                    e.printStackTrace();
+            //                }
+            //            }
 
             // Using a sleep time the chunk information can be again read for the corrected chunk
             //Now the corrupted chunk will be passed to see the reflection from clientpull
@@ -515,9 +516,22 @@ public class ChunkServer implements Node {
      * Print names of all chunks available at the ChunkServer
      */
     public synchronized void printChunks() {
+        /*
         System.out.println("No. of Chunks: " + chunks.size());
         for (String chunk : chunks) {
             System.out.println(chunk);
+        }
+        */
+
+        for (Map.Entry<String, StoredFile> entry : filesMap.entrySet()) {
+            String fileName = entry.getKey();
+            System.out.println("[*] " + fileName);
+            StoredFile storedFile = entry.getValue();
+            ArrayList<Chunk> chunks = storedFile.getChunks();
+            for (Chunk chunk : chunks) {
+                System.out.printf("\t[+] %s {timestamp: %s, sequenceNo: %s, version: %s}%n",
+                        chunk.getName(), chunk.getTimeStamp(), chunk.getSequenceNumber(), chunk.getVersion());
+            }
         }
     }
 
@@ -615,6 +629,7 @@ public class ChunkServer implements Node {
         newChunks.add(outputFileName);
 
         Chunk chunkObj = new Chunk(sequenceNumber, version, fileName);
+        chunkObj.setTimeStamp(new Date().toString());
 
         // create 8KB slices from 64KB chunk
         List<byte[]> slices = FileUtil.splitFile(chunk, Constants.SLICE_SIZE);

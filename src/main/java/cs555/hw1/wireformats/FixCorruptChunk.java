@@ -33,42 +33,30 @@ public class FixCorruptChunk extends Event {
         byte messageType = din.readByte();
         EventValidator.validateEventType(messageType, getType(), log);
 
-
-        // write chunkName
-        // read file name
+        // read chunk name
         int chunkNameLength = din.readInt();
         byte[] chunkNameBytes = new byte[chunkNameLength];
         din.readFully(chunkNameBytes, 0, chunkNameLength);
         chunkName = new String(chunkNameBytes);
 
 
-        // read chunkServerHosts
-
+        // read chunkServerHost
         int hostLength = din.readInt();
         byte[] hostBytes = new byte[hostLength];
         din.readFully(hostBytes, 0, hostLength);
         chunkServerHost = new String(hostBytes);
 
-
-        // read chunkServerHostNames
-
-
+        // read chunkServerHostName
         int hostNameLength = din.readInt();
         byte[] hostNameBytes = new byte[hostNameLength];
         din.readFully(hostNameBytes, 0, hostNameLength);
         chunkServerHostname = new String(hostNameBytes);
 
-
-        // read chunkServerPorts
-
-
+        // read chunkServerPort
         chunkServerPort = din.readInt();
-
 
         baInputStream.close();
         din.close();
-
-
     }
 
     @Override

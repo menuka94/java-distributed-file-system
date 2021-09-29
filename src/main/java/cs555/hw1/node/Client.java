@@ -273,7 +273,7 @@ public class Client implements Node {
             log.warn("readingChunksMap has not been initialized");
             throw new NullPointerException();
         } else {
-           // if(FileUtil.hash(chunk).equals(expectedChunkHash))
+            // if(FileUtil.hash(chunk).equals(expectedChunkHash))
             readingChunksMap.put(chunkName, chunk);
         }
     }
@@ -311,8 +311,7 @@ public class Client implements Node {
             if (fileCorrupted) {
                 log.error(" File is Corrupted!!! Try again please.");
                 //new IOException();
-            }
-            else{
+            } else {
 
                 // all chunks have been received. Proceed to assembling the file.
                 log.info("Received all chunks for {}", fileName);
@@ -337,7 +336,7 @@ public class Client implements Node {
                     fos.flush();
                     fos.close();
 
-                    log.info("Successfully assembled file:  {} and copied to this directory {}", fileName,Constants.CHUNK_DIR);
+                    log.info("Successfully assembled file:  {} and copied to this directory {}", fileName, Constants.CHUNK_DIR);
                 } catch (IOException e) {
                     log.error("Error assembling {}", fileName);
                     log.error(e.getLocalizedMessage());
@@ -372,7 +371,7 @@ public class Client implements Node {
 
         // contact chunk servers and retrieve the chunks
         for (int i = 0; i < noOfChunks; i++) {
-            Socket socket = new Socket(chunkServerHosts[i], chunkServerPorts[i]); //confusion why chunkServerHosts[i]
+            Socket socket = new Socket(chunkServerHosts[i], chunkServerPorts[i]);
             TCPConnection tcpConnection;
             if (tcpConnectionsCache.containsConnection(socket)) {
                 tcpConnection = tcpConnectionsCache.getConnection(socket);
