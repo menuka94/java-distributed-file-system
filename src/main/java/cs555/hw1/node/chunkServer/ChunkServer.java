@@ -63,7 +63,7 @@ public class ChunkServer implements Node {
 
     private String hostName;
 
-    public ChunkServer(Socket controllerSocket) throws IOException {
+    public ChunkServer(Socket controllerSocket, int port) throws IOException {
         log.info("Initializing ChunkServer on {}", System.getenv("HOSTNAME"));
         controllerConnection = new TCPConnection(controllerSocket, this);
         filesMap = new HashMap<>();
@@ -75,7 +75,7 @@ public class ChunkServer implements Node {
         hostName = controllerSocket.getLocalAddress().getHostName();
 
         tcpConnectionsCache = new TCPConnectionsCache();
-        tcpServerThread = new TCPServerThread(0, this, tcpConnectionsCache);
+        tcpServerThread = new TCPServerThread(port, this, tcpConnectionsCache);
         commandParser = new InteractiveCommandParser(this);
         sendRegistrationRequestToController();
     }
@@ -154,18 +154,19 @@ public class ChunkServer implements Node {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
+        if (args.length < 3) {
             System.out.println("Not enough arguments to start ChunkServer. " +
-                    "Enter <controller-host> and <controller-port>");
+                    "Enter <controller-host> and <controller-port> <chunk-server-port>");
             System.exit(1);
-        } else if (args.length > 2) {
-            System.out.println("Invalid number of arguments. Provide <controller-host> and <controller-port>");
+        } else if (args.length > 3) {
+            System.out.println("Invalid number of arguments. Provide <controller-host> <controller-port> <chunk-server-port>");
         }
 
         String controllerHost = args[0];
         int controllerPort = Integer.parseInt(args[1]);
+        int chunkServerPort = Integer.parseInt(args[2]);
         Socket controllerSocket = new Socket(controllerHost, controllerPort);
-        ChunkServer chunkServer = new ChunkServer(controllerSocket);
+        ChunkServer chunkServer = new ChunkServer(controllerSocket, chunkServerPort);
         chunkServer.initialize();
         TCPConnection tcpConnection;
         if (chunkServer.tcpConnectionsCache.containsConnection(controllerSocket)) {
@@ -305,11 +306,11 @@ public class ChunkServer implements Node {
             //if(request.getSocket().getInetAddress().getHostName().contains("pollock")){
             if (corrupted | corruptedChunk) {
                 //notify Controller
-                ReportChunkCorruption reportCorChunk = new ReportChunkCorruption();
-                reportCorChunk.setChunkName(chunkName);
+                ReportChunkCorruption reportChunkCorruption = new ReportChunkCorruption();
+                reportChunkCorruption.setChunkName(chunkName);
                 try {
                     log.info("ChunkServer {} is notifying controller about chunk corruption", hostName);
-                    controllerConnection.sendData(reportCorChunk.getBytes());
+                    controllerConnection.sendData(reportChunkCorruption.getBytes());
                 } catch (IOException e) {
                     log.error(e.getLocalizedMessage());
                     e.printStackTrace();
@@ -331,6 +332,7 @@ public class ChunkServer implements Node {
             if (tcpConnectionsCache.containsConnection(clientSocket)) {
                 clientConnection = tcpConnectionsCache.getConnection(clientSocket);
             } else {
+                log.warn("Connection does not exist in cache");
                 clientConnection = new TCPConnection(clientSocket, this);
             }
 

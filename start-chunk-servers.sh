@@ -21,10 +21,9 @@ declare -a CHUNK_SERVERS=(
   "berlin"
   "cairo"
   "lima"
-  "london"
 )
 
 for CHUNK_SERVER in "${CHUNK_SERVERS[@]}"
 do
-  xterm -hold -title "ChunkServer: ${CHUNK_SERVER}"  -e "ssh -t ${CHUNK_SERVER} \"cd ${CLASSES_DIR} && java -cp ${JAR_FILE} cs555.hw1.node.chunkServer.ChunkServer arkansas 9000\"" &
+  xterm -hold -title "ChunkServer: ${CHUNK_SERVER}"  -e "ssh -t ${CHUNK_SERVER} \"cd ${CLASSES_DIR} && java -cp ${JAR_FILE} cs555.hw1.node.chunkServer.ChunkServer arkansas 9000 9001\"" &
 done
