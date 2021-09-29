@@ -185,6 +185,8 @@ public class Client implements Node {
             chunkServerSockets.clear();
         } // end for each chunk loop
 
+        log.info("Finished writing all chunks ({}) of {}", chunks.size(), fileName);
+
         // contact the 3 chunk servers (A, B, C) to store the file
         // Client only writes to the first chunk server A, which is responsible for forwarding the chunk to B,
         // which in turn is responsible for forwarding it to C.
@@ -272,6 +274,7 @@ public class Client implements Node {
             throw new NullPointerException();
         } else {
             // if(FileUtil.hash(chunk).equals(expectedChunkHash))
+            log.info("{} retrieved", chunkName);
             readingChunksMap.put(chunkName, chunk);
         }
     }

@@ -53,6 +53,7 @@ public class ChunkServer implements Node {
     private TCPServerThread tcpServerThread;
     private TCPConnectionsCache tcpConnectionsCache;
     private InteractiveCommandParser commandParser;
+    private TCPConnection clientConnection;
 
     private volatile HashMap<String, StoredFile> filesMap;
     private volatile ConcurrentHashMap<String, ArrayList<String>> sliceHashesMap;
@@ -84,7 +85,8 @@ public class ChunkServer implements Node {
         tcpServerThread.start();
         commandParser.start();
 
-        initFilesFromDisk();
+        // TODO: implement reading chunks from disk upon start-up
+        // initFilesFromDisk();
 
         Timer minorTimer = new Timer();
         minorTimer.schedule(new MinorHeartbeat(), 0, Constants.ChunkServer.MINOR_HEARTBEAT_INTERVAL);
@@ -251,13 +253,13 @@ public class ChunkServer implements Node {
      *
      * @param event
      */
-    private synchronized void handleRetrieveChunkRequest(Event event) {
+    private void handleRetrieveChunkRequest(Event event) {
         RetrieveChunkRequest request = (RetrieveChunkRequest) event;
         String chunkName = request.getChunkName();
-        log.info("Searching for Chunk: {}", chunkName);
+        log.debug("Searching for Chunk: {}", chunkName);
         boolean chunkFound = chunks.contains(chunkName);
         if (chunkFound) {
-            log.info("{} found", chunkName);
+            log.debug("{} found", chunkName);
         } else {
             log.warn("{} not found", chunkName);
         }
@@ -286,7 +288,9 @@ public class ChunkServer implements Node {
             }
 
             if (!corrupted) {
-                log.info("{}'s integrity confirmed through slices!", chunkName);
+                log.debug("{}'s integrity confirmed through slices!", chunkName);
+            } else {
+                log.warn("{} is corrupted", chunkName);
             }
 
             // verity hash of the entire chunk
@@ -296,7 +300,7 @@ public class ChunkServer implements Node {
                 log.warn("Chunk hashes do not match for {}", chunkName);
                 corruptedChunk = true;
             } else {
-                log.info("{}'s integrity confirmed!", chunkName);
+                log.debug("{}'s integrity confirmed!", chunkName);
             }
 
             //Corruption handling.......
@@ -349,15 +353,16 @@ public class ChunkServer implements Node {
             response.setChunkHash(expectedHash);
 
             Socket clientSocket = request.getSocket();
-            TCPConnection clientConnection;
-            if (tcpConnectionsCache.containsConnection(clientSocket)) {
-                clientConnection = tcpConnectionsCache.getConnection(clientSocket);
-            } else {
-                clientConnection = new TCPConnection(clientSocket, this);
+            if (clientConnection == null) {
+                if (tcpConnectionsCache.containsConnection(clientSocket)) {
+                    clientConnection = tcpConnectionsCache.getConnection(clientSocket);
+                } else {
+                    clientConnection = new TCPConnection(clientSocket, this);
+                }
             }
 
             clientConnection.sendData(response.getBytes());
-            log.info("Sending {} the requested chunk", chunkName);
+            log.info("Sending {} to client", chunkName);
         } catch (IOException e) {
             log.error("Error reading {}", chunkName);
             log.error(e.getLocalizedMessage());
@@ -516,13 +521,6 @@ public class ChunkServer implements Node {
      * Print names of all chunks available at the ChunkServer
      */
     public synchronized void printChunks() {
-        /*
-        System.out.println("No. of Chunks: " + chunks.size());
-        for (String chunk : chunks) {
-            System.out.println(chunk);
-        }
-        */
-
         for (Map.Entry<String, StoredFile> entry : filesMap.entrySet()) {
             String fileName = entry.getKey();
             System.out.println("[*] " + fileName);
@@ -592,7 +590,9 @@ public class ChunkServer implements Node {
 
             try {
                 log.info("ChunkServer {} sending minor heartbeat", hostName);
-                controllerConnection.sendData(heartbeat.getBytes());
+                synchronized (controllerConnection) {
+                    controllerConnection.sendData(heartbeat.getBytes());
+                }
             } catch (IOException e) {
                 log.error(e.getLocalizedMessage());
                 e.printStackTrace();
