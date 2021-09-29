@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -405,8 +406,8 @@ public class Controller implements Node {
         for (Map.Entry<Integer, Socket> entry : chunkServerSocketMap.entrySet()) {
             if (socket == entry.getValue()) {
                 chunkServerChunksMap.put(entry.getKey(), chunks);
+                chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
             }
-            chunkServerFreeSpaceMap.put(entry.getKey(), freeSpace);
         }
 
         log.info("Minor Heartbeat received from ChunkServer '{}': (freeSpace={} KB, #chunks={}, #newChunks={})"
@@ -542,8 +543,8 @@ public class Controller implements Node {
         int[] chunkServerPorts = new int[Constants.REPLICATION_LEVEL];
 
         int noOfLiveChunkServers = chunkServerSocketMap.keySet().size();
-        if (noOfLiveChunkServers < 3) {
-            log.warn("No. of Live Chunk Servers is less than 3. Returning...");
+        if (noOfLiveChunkServers < Constants.REPLICATION_LEVEL) {
+            log.warn("No. of Live Chunk Servers is less than {}. Returning...", Constants.REPLICATION_LEVEL);
             return;
         }
 
@@ -556,6 +557,7 @@ public class Controller implements Node {
             String chunkServerHostName = chunkServerSocketMap.get(selectedChunkServerIDs.get(i))
                     .getInetAddress().getCanonicalHostName();
             int chunkServerPort = chunkServerListeningPortMap.get(selectedChunkServerIDs.get(i));
+
             chunkServerHosts[i] = chunkServerHost;
             chunkServerHostNames[i] = chunkServerHostName;
             chunkServerPorts[i] = chunkServerPort;
@@ -588,15 +590,22 @@ public class Controller implements Node {
         sortedFreeSpaces.sort(Comparator.reverseOrder());
         log.debug("freeSpaces (after sorting): {}", sortedFreeSpaces);
         List<Long> topNFreeSpaces = sortedFreeSpaces.subList(0, Constants.REPLICATION_LEVEL);
-        log.debug("topNFreeSpaces: {}", topNFreeSpaces);
-        for (Map.Entry<Integer, Long> entry : chunkServerFreeSpaceMap.entrySet()) {
-            if (topNFreeSpaces.contains(entry.getValue())) {
-                ids.add(entry.getKey());
+       
+        for (Long freeSpace : topNFreeSpaces) {
+            for (Map.Entry<Integer, Long> entry : chunkServerFreeSpaceMap.entrySet()) {
+                if (Objects.equals(entry.getValue(), freeSpace)) {
+                    if (!ids.contains(entry.getKey())) {
+                        ids.add(entry.getKey());
+                        break;
+                    }
+                }
             }
         }
 
         assert ids.size() == topNFreeSpaces.size();
+        assert ids.size() == Constants.REPLICATION_LEVEL;
 
+        log.info("topNFreeSpaces: {}, ids: {}", topNFreeSpaces, ids);
         return ids;
     }
 
@@ -608,7 +617,7 @@ public class Controller implements Node {
             Integer id = entry.getKey(); // ChunkServer ID
             String hostName = chunkServerSocketMap.get(id).getInetAddress().getHostName();
             System.out.println("-----------------------------------------");
-            System.out.println("Chunk Server: " + hostName);
+            System.out.printf("Chunk Server (%d): %s%n", id, hostName);
             System.out.println("[*] Free Space: " + chunkServerFreeSpaceMap.get(id) + " MB");
             System.out.println("[*] No. of chunks: " + entry.getValue().size());
             if (printChunks) {
