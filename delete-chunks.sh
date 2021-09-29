@@ -1,12 +1,6 @@
 #!/bin/bash
 
 declare -a CHUNK_SERVERS=(
-  "lattice-10"
-  "lattice-11"
-  "lattice-12"
-  "lattice-14"
-  "lattice-16"
-  "boston" # clear the /tmp/menukaw dir of client
   "nashville"
   "denver"
   "boise"
@@ -26,13 +20,8 @@ declare -a CHUNK_SERVERS=(
   "cairo"
   "lima"
   "london"
-#  "salt-lake-city"
-#  "cheyenne"
-#  "helena"
-#  "lincoln"
-#  "nashville"
-#  "phoenix"
-#  "providence"
+  "loveland"
+  "steamboat"
 )
 
 for CHUNK_SERVER in "${CHUNK_SERVERS[@]}"

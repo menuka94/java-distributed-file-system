@@ -21,6 +21,9 @@ declare -a CHUNK_SERVERS=(
   "berlin"
   "cairo"
   "lima"
+  "london"
+  "loveland"
+  "steamboat"
 )
 
 for CHUNK_SERVER in "${CHUNK_SERVERS[@]}"

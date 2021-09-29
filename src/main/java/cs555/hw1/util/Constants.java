@@ -22,9 +22,9 @@ public class Constants {
     public static class ChunkServer {
         public static final String CMD_LIST_CHUNKS = "list-chunks";
         public static final String CMD_GET_HOST = "get-host";
-        public static final int MAX_NODES = 20;
+        public static final int MAX_NODES = 30;
         public static final String EXT_DATA_CHUNK = "_chunk";
-        public static final int MAJOR_HEARTBEAT_INTERVAL = 60 * 1000;  // 1 minute
+        public static final int MAJOR_HEARTBEAT_INTERVAL = 5 * 60 * 1000;  // 5 minute
         public static final int MINOR_HEARTBEAT_INTERVAL = 30 * 1000; // 30 seconds
         public static final int LIVENESS_HEARTBEAT_INTERVAL = 10 * 1000; // 10 seconds
     }
