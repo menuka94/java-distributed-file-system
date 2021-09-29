@@ -360,10 +360,15 @@ public class Client implements Node {
         int noOfChunks = retrieveFileResponse.getNoOfChunks();
         String[] chunkServerHosts = retrieveFileResponse.getChunkServerHosts();
         String[] chunkServerHostNames = retrieveFileResponse.getChunkServerHostNames();
+        String[] cleanedChunkHostNames = new String[chunkServerHostNames.length];
         int[] chunkServerPorts = retrieveFileResponse.getChunkServerPorts();
 
-        log.info("ChunkServer information for file '{}': size={}, #chunks={}, hosts={}, ports={}, hostNames={}",
-                fileName, fileSize, noOfChunks, chunkServerHosts, chunkServerPorts, chunkServerHostNames);
+        for (int i = 0; i < chunkServerHostNames.length; i++) {
+            cleanedChunkHostNames[i] = FileUtil.getCleanedHostName(chunkServerHostNames[i]);
+        }
+
+        log.info("ChunkServer information for file '{}': size={}, #chunks={}, , hostNames={}",
+                fileName, fileSize, noOfChunks, cleanedChunkHostNames);
 
         // sanity check
         assert (chunkServerHosts.length == chunkServerPorts.length &&

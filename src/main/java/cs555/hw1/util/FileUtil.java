@@ -16,6 +16,11 @@ import java.util.List;
 public class FileUtil {
     private static final Logger log = LogManager.getLogger(FileUtil.class);
 
+    public static void main(String[] args) {
+        System.out.println(getFileNameFromChunkName("Hall_of_Fame.pdf_chunk1"));
+        System.out.println(getCleanedHostName("lattice-10.cs.colostate.edu"));
+    }
+
     public static byte[] readFileAsBytes(String filePath) throws IOException {
         return Files.readAllBytes(Paths.get(filePath));
     }
@@ -28,6 +33,11 @@ public class FileUtil {
         }
 
         return hashes;
+    }
+
+    public static String getCleanedHostName(String hostName) {
+        int i = hostName.indexOf(".");
+        return hostName.substring(0, i);
     }
 
     public static byte[] concat(byte[]... arrays) {
@@ -47,7 +57,7 @@ public class FileUtil {
 
     public static String getFileNameFromChunkName(String chunkName) {
         int i = chunkName.indexOf(Constants.ChunkServer.EXT_DATA_CHUNK);
-        return chunkName.substring(0, i - 1);
+        return chunkName.substring(0, i);
     }
 
     /**

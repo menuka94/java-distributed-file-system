@@ -6,6 +6,7 @@ import cs555.hw1.transport.TCPConnection;
 import cs555.hw1.transport.TCPConnectionsCache;
 import cs555.hw1.transport.TCPServerThread;
 import cs555.hw1.util.Constants;
+import cs555.hw1.util.FileUtil;
 import cs555.hw1.util.controller.FileInfo;
 import cs555.hw1.wireformats.ControllerSendsClientChunkServers;
 import cs555.hw1.wireformats.Event;
@@ -322,15 +323,16 @@ public class Controller implements Node {
 
     private synchronized void handleReportChunkCorruption(Event event) {
         ReportChunkCorruption reportChunkCorruption = (ReportChunkCorruption) event;
-        String corruptionChunkName = reportChunkCorruption.getChunkName();
+        String corruptedChunkName = reportChunkCorruption.getChunkName();
         Socket socket = reportChunkCorruption.getSocket();
         String chunkServerHostname = socket.getInetAddress().getHostName();
 
 
         log.warn("Corrupted Chunk! {} has been corrupted at ChunkServer '{}'",
-                corruptionChunkName, chunkServerHostname);
+                corruptedChunkName, chunkServerHostname);
 
-        String fileName = corruptionChunkName.split("_")[0]; //retrieveFileRequest.getFileName();
+//        String fileName = corruptionChunkName.split("_")[0]; //retrieveFileRequest.getFileName();
+        String fileName = FileUtil.getFileNameFromChunkName(corruptedChunkName);
 
         log.info("Trying to Recover....: {}", fileName);
 
@@ -357,7 +359,7 @@ public class Controller implements Node {
         int chunkServerPorts = 0;
 
         //for (int i = 0; i < noOfChunks; i++) {
-        String chunkName = corruptionChunkName; //fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
+        String chunkName = corruptedChunkName; //fileName + Constants.ChunkServer.EXT_DATA_CHUNK + (i + 1);
 
         // iterate through map <ChunkServerID, chunkNames>
         for (Map.Entry<Integer, ArrayList<String>> entry : chunkServerChunksMap.entrySet()) {
@@ -377,7 +379,7 @@ public class Controller implements Node {
 
         // send response to chunk Server
         FixCorruptChunk fixCorruptChunkInfo = new FixCorruptChunk();
-        fixCorruptChunkInfo.setChunkName(corruptionChunkName);
+        fixCorruptChunkInfo.setChunkName(corruptedChunkName);
         fixCorruptChunkInfo.setChunkServerHost(chunkServerHosts);
         fixCorruptChunkInfo.setChunkServerHostname(chunkServerHostNames);
         fixCorruptChunkInfo.setChunkServerPort(chunkServerPorts);
