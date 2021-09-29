@@ -590,7 +590,7 @@ public class Controller implements Node {
         sortedFreeSpaces.sort(Comparator.reverseOrder());
         log.debug("freeSpaces (after sorting): {}", sortedFreeSpaces);
         List<Long> topNFreeSpaces = sortedFreeSpaces.subList(0, Constants.REPLICATION_LEVEL);
-       
+
         for (Long freeSpace : topNFreeSpaces) {
             for (Map.Entry<Integer, Long> entry : chunkServerFreeSpaceMap.entrySet()) {
                 if (Objects.equals(entry.getValue(), freeSpace)) {
@@ -605,7 +605,7 @@ public class Controller implements Node {
         assert ids.size() == topNFreeSpaces.size();
         assert ids.size() == Constants.REPLICATION_LEVEL;
 
-        log.info("topNFreeSpaces: {}, ids: {}", topNFreeSpaces, ids);
+        log.debug("topNFreeSpaces: {}, ids: {}", topNFreeSpaces, ids);
         return ids;
     }
 
@@ -617,9 +617,8 @@ public class Controller implements Node {
             Integer id = entry.getKey(); // ChunkServer ID
             String hostName = chunkServerSocketMap.get(id).getInetAddress().getHostName();
             System.out.println("-----------------------------------------");
-            System.out.printf("Chunk Server (%d): %s%n", id, hostName);
-            System.out.println("[*] Free Space: " + chunkServerFreeSpaceMap.get(id) + " MB");
-            System.out.println("[*] No. of chunks: " + entry.getValue().size());
+            System.out.printf("Chunk Server (%d): %s {freeSpace = %s MB, #chunks = %s}%n",
+                    id, hostName, chunkServerFreeSpaceMap.get(id), entry.getValue().size());
             if (printChunks) {
                 for (String chunk : entry.getValue()) {
                     System.out.println("[*] " + chunk);

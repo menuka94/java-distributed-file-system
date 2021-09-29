@@ -254,10 +254,10 @@ public class ChunkServer implements Node {
     private synchronized void handleRetrieveChunkRequest(Event event) {
         RetrieveChunkRequest request = (RetrieveChunkRequest) event;
         String chunkName = request.getChunkName();
-        log.info("Searching for Chunk: {}", chunkName);
+        log.debug("Searching for Chunk: {}", chunkName);
         boolean chunkFound = chunks.contains(chunkName);
         if (chunkFound) {
-            log.info("{} found", chunkName);
+            log.debug("{} found", chunkName);
         } else {
             log.warn("{} not found", chunkName);
         }
@@ -286,7 +286,9 @@ public class ChunkServer implements Node {
             }
 
             if (!corrupted) {
-                log.info("{}'s integrity confirmed through slices!", chunkName);
+                log.debug("{}'s integrity confirmed through slices!", chunkName);
+            } else {
+                log.warn("{} is corrupted", chunkName);
             }
 
             // verity hash of the entire chunk
@@ -296,7 +298,7 @@ public class ChunkServer implements Node {
                 log.warn("Chunk hashes do not match for {}", chunkName);
                 corruptedChunk = true;
             } else {
-                log.info("{}'s integrity confirmed!", chunkName);
+                log.debug("{}'s integrity confirmed!", chunkName);
             }
 
             //Corruption handling.......
@@ -313,30 +315,6 @@ public class ChunkServer implements Node {
                     e.printStackTrace();
                 }
             }
-            //            if (corrupted | corruptedChunk) {
-            //                FixCorruptChunk fixCorruptChunk = new FixCorruptChunk();
-            //                fixCorruptChunk.setChunkName(chunkName);
-            //                try {
-            //                    log.info("ChunkServer {} is requesting replica information of corrupted chunk: ", hostName);
-            //                    controllerConnection.sendData(fixCorruptChunk.getBytes());
-            //                } catch (IOException e) {
-            //                    log.error(e.getLocalizedMessage());
-            //                    e.printStackTrace();
-            //                }
-            //            }
-
-
-            //            if (corrupted | corruptedChunk) {
-            //                // wait for chunkServerSockets object to get populated
-            //                try {
-            //                    log.info(" Please try to retrieve the files again few seconds later.");
-            //                    //Thread.sleep(10000);
-            //                } catch (InterruptedException e) {
-            //                    log.error("Error while waiting for chunkServers to get populated.");
-            //                    log.error(e.getLocalizedMessage());
-            //                    e.printStackTrace();
-            //                }
-            //            }
 
             // Using a sleep time the chunk information can be again read for the corrected chunk
             //Now the corrupted chunk will be passed to see the reflection from clientpull
@@ -357,7 +335,7 @@ public class ChunkServer implements Node {
             }
 
             clientConnection.sendData(response.getBytes());
-            log.info("Sending {} the requested chunk", chunkName);
+            log.info("Sending {} to client", chunkName);
         } catch (IOException e) {
             log.error("Error reading {}", chunkName);
             log.error(e.getLocalizedMessage());
