@@ -436,26 +436,23 @@ public class Controller implements Node {
     private synchronized void registerChunkServer(Event event) {
         // Process Request
         RegisterChunkServer registerChunkServer = (RegisterChunkServer) event;
-        log.info("Chunk Server IP Address Length: {}", registerChunkServer.getIpAddressLength());
 
         byte[] ipAddress = registerChunkServer.getIpAddress();
-        log.info("Chunk Server IP Address: {}", ipAddress);
-
         int port = registerChunkServer.getPort();
-        log.info("Chunk Server Port: {}", port);
 
         int randomId = 0;
 
         // Start Response
         ReportChunkServerRegistration responseEvent = new ReportChunkServerRegistration();
+        Socket chunkServerSocket = registerChunkServer.getSocket();
         if (!Arrays.equals(ipAddress,
-                registerChunkServer.getSocket().getInetAddress().getAddress())) {
+                chunkServerSocket.getInetAddress().getAddress())) {
             log.warn("IP Addresses differ");
             responseEvent.setSuccessStatus(-1);
             String infoString = "Registration IP Address and origin IP Address do not match";
             responseEvent.setInfoString(infoString);
             responseEvent.setLengthOfString((byte) infoString.getBytes().length);
-        } else if (tcpConnectionsCache.containsConnection(registerChunkServer.getSocket())) {
+        } else if (tcpConnectionsCache.containsConnection(chunkServerSocket)) {
             // everything is OK. Proceed to register the Chunk Server
             randomId = random.nextInt(Constants.ChunkServer.MAX_NODES) + 1; // add one to avoid zero
 
@@ -477,10 +474,13 @@ public class Controller implements Node {
             return;
         }
 
-        TCPConnection tcpConnection = tcpConnectionsCache.getConnection(registerChunkServer.getSocket());
+        log.info("Registering ChunkServer (IPAddress: {}, Host: {}, Port: {})",
+                new String(ipAddress), chunkServerSocket.getInetAddress().getHostName(), port);
+
+        TCPConnection tcpConnection = tcpConnectionsCache.getConnection(chunkServerSocket);
         try {
             tcpConnection.sendData(responseEvent.getBytes());
-            chunkServerSocketMap.put(randomId, registerChunkServer.getSocket());
+            chunkServerSocketMap.put(randomId, chunkServerSocket);
             chunkServerListeningPortMap.put(randomId, registerChunkServer.getPort());
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -494,13 +494,9 @@ public class Controller implements Node {
 
         // Process Request
         RegisterClient registerClient = (RegisterClient) event;
-        log.info("Client IP Address Length: {}", registerClient.getIpAddressLength());
 
         byte[] clientIpAddress = registerClient.getIpAddress();
-        log.info("Client IP Address: {}", clientIpAddress);
-
         int clientPort = registerClient.getPort();
-        log.info("Client Port: {}", clientPort);
 
         // Start Response
         ReportClientRegistration responseEvent = new ReportClientRegistration();
@@ -524,6 +520,10 @@ public class Controller implements Node {
         }
 
         clientSocket = registerClient.getSocket();
+
+        log.info("Registering Client (IPAddress: {}, Host: {}, Port: {})",
+                new String(clientIpAddress), clientSocket.getInetAddress().getHostName(), clientPort);
+
         clientConnection = tcpConnectionsCache.getConnection(registerClient.getSocket());
         clientConnection.sendData(responseEvent.getBytes());
     }
