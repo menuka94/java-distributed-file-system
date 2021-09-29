@@ -84,7 +84,7 @@ public class ChunkServer implements Node {
         tcpServerThread.start();
         commandParser.start();
 
-        initFilesFromDisk();
+        // initFilesFromDisk();
 
         Timer minorTimer = new Timer();
         minorTimer.schedule(new MinorHeartbeat(), 0, Constants.ChunkServer.MINOR_HEARTBEAT_INTERVAL);
