@@ -102,6 +102,14 @@ public class ReportClientRegistration extends Event {
         } catch (IOException e) {
             log.error(e.getMessage());
             e.printStackTrace();
+        } finally {
+            try {
+                baOutputStram.close();
+                dout.close();
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
 
         return marshalledBytes;

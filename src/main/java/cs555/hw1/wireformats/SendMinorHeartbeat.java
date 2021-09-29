@@ -113,11 +113,7 @@ public class SendMinorHeartbeat extends Event {
         return newChunks;
     }
 
-    //    public void setChunks(ArrayList<String> chunks) {
-    //        this.chunks = chunks;
-    //    }
     public void setNewChunks(ArrayList<String> newChunks) {
-
         this.newChunks = newChunks;
     }
 

@@ -56,6 +56,13 @@ public class ReportChunkCorruption extends Event {
         } catch (IOException e) {
             log.error(e.getLocalizedMessage());
             e.printStackTrace();
+        } finally {
+            try {
+                baOutputStream.close();
+                dout.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         return marshalledBytes;

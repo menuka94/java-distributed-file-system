@@ -331,7 +331,7 @@ public class Controller implements Node {
         log.warn("Corrupted Chunk! {} has been corrupted at ChunkServer '{}'",
                 corruptedChunkName, chunkServerHostname);
 
-//        String fileName = corruptionChunkName.split("_")[0]; //retrieveFileRequest.getFileName();
+        //        String fileName = corruptionChunkName.split("_")[0]; //retrieveFileRequest.getFileName();
         String fileName = FileUtil.getFileNameFromChunkName(corruptedChunkName);
 
         log.info("Trying to Recover....: {}", fileName);

@@ -77,7 +77,16 @@ public class RetrieveChunkResponse extends Event {
             dout.flush();
             marshalledBytes = baOutputStream.toByteArray();
         } catch (IOException e) {
+            log.error(e.getLocalizedMessage());
             e.printStackTrace();
+        } finally {
+            try {
+                baOutputStream.close();
+                dout.close();
+            } catch (IOException e) {
+                log.error(e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
 
         return marshalledBytes;

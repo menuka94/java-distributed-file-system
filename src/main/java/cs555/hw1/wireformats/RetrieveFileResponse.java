@@ -115,6 +115,13 @@ public class RetrieveFileResponse extends Event {
             marshalledBytes = baOutputStream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                baOutputStream.close();
+                dout.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         return marshalledBytes;
