@@ -131,6 +131,7 @@ public class Client implements Node {
 
         sendInitialFileInfo(fileName, chunks.size(), bytes.length);
 
+        // for each chunk
         for (int i = 0; i < chunks.size(); i++) {
             log.debug("Writing chunk: {}", i + 1);
             // contact controller and get a list of 3 chunk servers
@@ -182,9 +183,6 @@ public class Client implements Node {
 
             log.info("Chunk {} processed. Proceeding to the next chunk.", i + 1);
             chunkServerSockets.clear();
-
-            // contact controller and get a list of 3 chunk servers
-            sendChunkServerRequestToController();
         } // end for each chunk loop
 
         // contact the 3 chunk servers (A, B, C) to store the file
@@ -219,7 +217,7 @@ public class Client implements Node {
         log.debug("sendChunkServerRequestToController()");
         ClientRequestsChunkServersFromController requestChunkServersEvent =
                 new ClientRequestsChunkServersFromController();
-        requestChunkServersEvent.setSocket(controllerConnection.getSocket());
+        //        requestChunkServersEvent.setSocket(controllerConnection.getSocket());
         controllerConnection.sendData(requestChunkServersEvent.getBytes());
     }
 
