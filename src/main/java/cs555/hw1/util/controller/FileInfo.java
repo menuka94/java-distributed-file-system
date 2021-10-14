@@ -9,9 +9,9 @@ import org.apache.logging.log4j.Logger;
 public class FileInfo {
     private static final Logger log = LogManager.getLogger(FileInfo.class);
 
-    private String fileName;
-    private int noOfChunks;
-    private int fileSize; // file size in KB
+    private final String fileName;
+    private final int noOfChunks;
+    private final int fileSize; // file size in KB
 
     public FileInfo(String fileName, int noOfChunks, int fileSize) {
         this.fileName = fileName;

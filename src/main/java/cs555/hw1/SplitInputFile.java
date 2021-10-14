@@ -13,8 +13,8 @@ import java.util.Arrays;
  */
 
 public class SplitInputFile {
-    private static String FILE_NAME = "test_file.csv";
-    private static int PART_SIZE = 64000;
+    private static final String FILE_NAME = "test_file.csv";
+    private static final int PART_SIZE = 64000;
 
     public static void main(final String[] args)
             throws IOException {
@@ -28,7 +28,7 @@ public class SplitInputFile {
         byte[] toWrite;
 
         try (
-                final InputStream in = Files.newInputStream(file);
+                final InputStream in = Files.newInputStream(file)
         ) {
             while ((bytesRead = in.read(buf)) != -1) {
                 part = file.resolveSibling(filenameBase + ".part" + partNumber);

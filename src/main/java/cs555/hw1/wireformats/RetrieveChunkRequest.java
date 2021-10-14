@@ -11,12 +11,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class RetrieveChunkRequest extends Event {
     private static final Logger log = LogManager.getLogger(RetrieveChunkRequest.class);
 
-    private Socket socket;
     private String chunkName;
 
     public RetrieveChunkRequest() {
@@ -74,15 +72,6 @@ public class RetrieveChunkRequest extends Event {
     @Override
     public int getType() {
         return Protocol.RETRIEVE_CHUNK_REQUEST;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public String getChunkName() {

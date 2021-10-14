@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
 
 /**
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 public class SendMinorHeartbeat extends Event {
     private static final Logger log = LogManager.getLogger(SendMinorHeartbeat.class);
 
-    private Socket socket;
     private int noOfChunks;
     private ArrayList<String> newChunks;
     private long freeSpace;
@@ -146,14 +144,5 @@ public class SendMinorHeartbeat extends Event {
     @Override
     public int getType() {
         return Protocol.SEND_MINOR_HEARTBEAT;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 }

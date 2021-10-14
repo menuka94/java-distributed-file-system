@@ -41,11 +41,11 @@ public class Client implements Node {
     private static final Logger log = LogManager.getLogger(Client.class);
 
     private int port;
-    private InteractiveCommandParser commandParser;
+    private final InteractiveCommandParser commandParser;
     private Socket controllerSocket;
-    private TCPConnection controllerConnection;
-    private TCPServerThread tcpServerThread;
-    private TCPConnectionsCache tcpConnectionsCache;
+    private final TCPConnection controllerConnection;
+    private final TCPServerThread tcpServerThread;
+    private final TCPConnectionsCache tcpConnectionsCache;
 
     // store ChunkServers returned by controller (overwritten for each call)
     private ArrayList<Socket> chunkServerSockets;
@@ -281,9 +281,9 @@ public class Client implements Node {
     public class FileAssembler extends Thread {
         private final Logger log = LogManager.getLogger(FileAssembler.class);
 
-        private String fileName;
-        private int noOfChunks;
-        private TreeSet<String> expectedChunkNames;
+        private final String fileName;
+        private final int noOfChunks;
+        private final TreeSet<String> expectedChunkNames;
 
         public FileAssembler(String fileName, int noOfChunks) {
             this.fileName = fileName;

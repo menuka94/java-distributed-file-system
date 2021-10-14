@@ -11,12 +11,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class FixCorruptChunkResponse extends Event {
     private static final Logger log = LogManager.getLogger(FixCorruptChunkResponse.class);
 
-    private Socket socket;
     private String chunkName;
     private byte[] chunk;
     private String chunkHash;
@@ -95,15 +93,6 @@ public class FixCorruptChunkResponse extends Event {
     @Override
     public int getType() {
         return Protocol.FIX_CORRUPT_CHUNK_RESPONSE;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public byte[] getChunk() {

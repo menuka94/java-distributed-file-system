@@ -11,13 +11,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class ClientRequestsChunkServersFromController extends Event {
     private static final Logger log = LogManager.getLogger(ClientRequestsChunkServersFromController.class);
-
-    private Socket socket;
-
 
     public ClientRequestsChunkServersFromController() {
 
@@ -33,14 +29,6 @@ public class ClientRequestsChunkServersFromController extends Event {
 
         baInputStream.close();
         din.close();
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     @Override

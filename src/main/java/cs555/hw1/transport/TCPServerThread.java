@@ -12,10 +12,10 @@ import java.net.Socket;
 public class TCPServerThread extends Thread {
     private static final Logger logger = LogManager.getLogger(TCPServerThread.class);
     private boolean listeningForClients;
-    private ServerSocket serverSocket;
-    private int listenPort;
-    private Node node;
-    private TCPConnectionsCache tcpConnectionsCache;
+    private final ServerSocket serverSocket;
+    private final int listenPort;
+    private final Node node;
+    private final TCPConnectionsCache tcpConnectionsCache;
 
     public TCPServerThread(int listenPort, Node node, TCPConnectionsCache tcpConnectionsCache)
             throws IOException {

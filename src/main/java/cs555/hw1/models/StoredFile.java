@@ -8,8 +8,8 @@ import java.util.ArrayList;
 public class StoredFile {
     private static final Logger log = LogManager.getLogger(StoredFile.class);
 
-    private String name;
-    private ArrayList<Chunk> chunks;
+    private final String name;
+    private final ArrayList<Chunk> chunks;
 
     public StoredFile(String name) {
         this.name = name;

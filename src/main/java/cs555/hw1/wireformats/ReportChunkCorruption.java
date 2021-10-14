@@ -10,12 +10,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class ReportChunkCorruption extends Event {
     private static final Logger log = LogManager.getLogger(ReportChunkCorruption.class);
 
-    private Socket socket;
     private String chunkName;
 
     public ReportChunkCorruption() {
@@ -71,15 +69,6 @@ public class ReportChunkCorruption extends Event {
     @Override
     public int getType() {
         return Protocol.REPORT_CHUNK_CORRUPTION;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public String getChunkName() {

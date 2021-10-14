@@ -12,9 +12,9 @@ import java.net.Socket;
 
 public class TCPReceiverThread extends Thread {
     private static final Logger log = LogManager.getLogger(TCPReceiverThread.class);
-    private Socket socket;
-    private DataInputStream din;
-    private Node node;
+    private final Socket socket;
+    private final DataInputStream din;
+    private final Node node;
 
     public TCPReceiverThread(Socket socket, Node node) throws IOException {
         this.node = node;

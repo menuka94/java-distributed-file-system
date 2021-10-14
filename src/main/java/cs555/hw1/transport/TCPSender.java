@@ -11,8 +11,8 @@ import java.net.Socket;
 public class TCPSender {
     private static final Logger log = LogManager.getLogger(TCPSender.class);
 
-    private Socket socket;
-    private DataOutputStream dout;
+    private final Socket socket;
+    private final DataOutputStream dout;
 
     public TCPSender(Socket socket) throws IOException {
         this.socket = socket;

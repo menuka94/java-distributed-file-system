@@ -9,10 +9,10 @@ import java.net.Socket;
 
 public class TCPConnection {
     public static final Logger log = LogManager.getLogger(TCPConnection.class);
-    private Socket socket;
+    private final Socket socket;
     private TCPSender tcpSender;
-    private TCPReceiverThread tcpReceiverThread;
-    private Node node; // node associated with TCPConnection
+    private final TCPReceiverThread tcpReceiverThread;
+    private final Node node; // node associated with TCPConnection
 
     public TCPConnection(Socket socket, Node node) throws IOException {
         this.socket = socket;

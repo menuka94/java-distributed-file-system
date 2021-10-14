@@ -11,12 +11,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class FixCorruptChunk extends Event {
     private static final Logger log = LogManager.getLogger(FixCorruptChunk.class);
 
-    private Socket socket;
     private String chunkName;
     private String chunkServerHost;
     private String chunkServerHostname;
@@ -104,15 +102,6 @@ public class FixCorruptChunk extends Event {
     @Override
     public int getType() {
         return Protocol.FIX_CORRUPT_CHUNK;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public String getChunkName() {

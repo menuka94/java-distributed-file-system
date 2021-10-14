@@ -10,12 +10,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class StoreChunk extends Event {
     private static final Logger log = LogManager.getLogger(StoreChunk.class);
-
-    private Socket socket;
 
     private byte[] chunk;
     private int sequenceNumber;
@@ -178,15 +175,6 @@ public class StoreChunk extends Event {
 
     public void setNextChunkServerPorts(int[] nextChunkServerPorts) {
         this.nextChunkServerPorts = nextChunkServerPorts;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public String getFileName() {

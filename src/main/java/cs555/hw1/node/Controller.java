@@ -56,29 +56,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Controller implements Node {
     private static final Logger log = LogManager.getLogger(Controller.class);
 
-    private int port;
-    private TCPServerThread tcpServerThread;
-    private TCPConnectionsCache tcpConnectionsCache;
+    private final int port;
+    private final TCPServerThread tcpServerThread;
+    private final TCPConnectionsCache tcpConnectionsCache;
 
-    private InteractiveCommandParser commandParser;
+    private final InteractiveCommandParser commandParser;
     private Socket clientSocket;
     private TCPConnection clientConnection;
 
     // ChunkServerID, Socket
-    private volatile ConcurrentHashMap<Integer, Socket> chunkServerSocketMap;
+    private final ConcurrentHashMap<Integer, Socket> chunkServerSocketMap;
 
     // ChunkServerID, ChunkInfo
-    private volatile ConcurrentHashMap<Integer, ArrayList<String>> chunkServerChunksMap;
+    private final ConcurrentHashMap<Integer, ArrayList<String>> chunkServerChunksMap;
 
-    private volatile ConcurrentHashMap<Integer, Long> chunkServerFreeSpaceMap;
+    private final ConcurrentHashMap<Integer, Long> chunkServerFreeSpaceMap;
 
     // ChunkServerID, Port
-    private volatile ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
+    private final ConcurrentHashMap<Integer, Integer> chunkServerListeningPortMap;
 
     // File names and number of chunks (for all files in the system)
-    private volatile Vector<FileInfo> fileInfos;
+    private final Vector<FileInfo> fileInfos;
 
-    private Random random;
+    private final Random random;
 
     // singleton instance
     private static volatile Controller instance;

@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class RegisterChunkServer extends Event {
     private static final Logger log = LogManager.getLogger(RegisterChunkServer.class);
@@ -19,7 +18,6 @@ public class RegisterChunkServer extends Event {
     private byte ipAddressLength;
     private byte[] ipAddress;
     private int port;
-    private Socket socket;
 
     public RegisterChunkServer() {
 
@@ -64,15 +62,6 @@ public class RegisterChunkServer extends Event {
 
     public void setPort(int port) {
         this.port = port;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     @Override

@@ -49,19 +49,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChunkServer implements Node {
     private static final Logger log = LogManager.getLogger(ChunkServer.class);
 
-    private TCPConnection controllerConnection;
-    private TCPServerThread tcpServerThread;
-    private TCPConnectionsCache tcpConnectionsCache;
-    private InteractiveCommandParser commandParser;
+    private final TCPConnection controllerConnection;
+    private final TCPServerThread tcpServerThread;
+    private final TCPConnectionsCache tcpConnectionsCache;
+    private final InteractiveCommandParser commandParser;
 
-    private volatile HashMap<String, StoredFile> filesMap;
-    private volatile ConcurrentHashMap<String, ArrayList<String>> sliceHashesMap;
-    private volatile ConcurrentHashMap<String, String> chunkHashesMap;
-    private volatile ArrayList<String> chunks;
-    private volatile ArrayList<String> newChunks;
+    private final HashMap<String, StoredFile> filesMap;
+    private final ConcurrentHashMap<String, ArrayList<String>> sliceHashesMap;
+    private final ConcurrentHashMap<String, String> chunkHashesMap;
+    private final ArrayList<String> chunks;
+    private final ArrayList<String> newChunks;
     private volatile int prevChunkSize;
 
-    private String hostName;
+    private final String hostName;
 
     public ChunkServer(Socket controllerSocket, int port) throws IOException {
         log.info("Initializing ChunkServer on {}", System.getenv("HOSTNAME"));

@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class ReportChunkServerRegistration extends Event {
     private static final Logger log = LogManager.getLogger(ReportChunkServerRegistration.class);
@@ -20,7 +19,6 @@ public class ReportChunkServerRegistration extends Event {
     private int successStatus;
     private byte lengthOfString;
     private String infoString;
-    private Socket socket;
 
     public ReportChunkServerRegistration() {
 
@@ -74,15 +72,6 @@ public class ReportChunkServerRegistration extends Event {
 
     public void setInfoString(String infoString) {
         this.infoString = infoString;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     @Override

@@ -11,12 +11,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class RetrieveFileRequest extends Event {
     private static final Logger log = LogManager.getLogger(RetrieveFileRequest.class);
 
-    private Socket socket;
     private String fileName;
 
     public RetrieveFileRequest() {
@@ -74,15 +72,6 @@ public class RetrieveFileRequest extends Event {
     @Override
     public int getType() {
         return Protocol.RETRIEVE_FILE_REQUEST;
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public String getFileName() {

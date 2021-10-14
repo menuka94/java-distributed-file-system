@@ -14,9 +14,9 @@ import java.util.Scanner;
 public class InteractiveCommandParser extends Thread {
     private static final Logger log = LogManager.getLogger(InteractiveCommandParser.class);
 
-    private Scanner scanner;
-    private Node node;
-    private boolean acceptingCommands;
+    private final Scanner scanner;
+    private final Node node;
+    private final boolean acceptingCommands;
 
     private enum Mode {
         Client, Controller, ChunkServer

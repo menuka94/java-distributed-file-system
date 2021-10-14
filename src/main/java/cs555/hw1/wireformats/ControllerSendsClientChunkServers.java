@@ -11,12 +11,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class ControllerSendsClientChunkServers extends Event {
     private static final Logger log = LogManager.getLogger(ControllerSendsClientChunkServers.class);
-
-    private Socket socket;
 
     private String[] chunkServerHosts;
     private String[] chunkServerHostNames;
@@ -57,16 +54,6 @@ public class ControllerSendsClientChunkServers extends Event {
 
         baInputStream.close();
         din.close();
-    }
-
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     @Override

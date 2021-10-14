@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class ReportClientRegistration extends Event {
     private static final Logger log = LogManager.getLogger(ReportClientRegistration.class);
@@ -20,7 +19,6 @@ public class ReportClientRegistration extends Event {
     private int successStatus;
     private byte lengthOfString;
     private String infoString;
-    private Socket socket;
 
     public ReportClientRegistration() {
 
@@ -42,15 +40,6 @@ public class ReportClientRegistration extends Event {
 
         baInputStream.close();
         din.close();
-    }
-
-    @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
     }
 
     public int getMessageType() {

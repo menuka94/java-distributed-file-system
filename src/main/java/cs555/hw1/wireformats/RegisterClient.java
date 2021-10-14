@@ -19,7 +19,6 @@ public class RegisterClient extends Event {
     private byte ipAddressLength;
     private byte[] ipAddress;
     private int port;
-    private Socket socket;
 
     public RegisterClient() {
 

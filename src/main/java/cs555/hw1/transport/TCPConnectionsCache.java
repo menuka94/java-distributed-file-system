@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 public class TCPConnectionsCache {
-    private HashMap<Socket, TCPConnection> cachedConnections = new HashMap<>();
+    private final HashMap<Socket, TCPConnection> cachedConnections = new HashMap<>();
 
     private TCPConnectionsCache instance;
 
